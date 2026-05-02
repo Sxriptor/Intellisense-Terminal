@@ -78,12 +78,20 @@ npm isntall   # Press Enter → autocorrects to "npm install"
 docker ps -a  # Works with any command
 ```
 
-### 5. Verify it's working
+### 5. Monitor with Terminal UI
 
 ```sh
-tac status        # Should show "running"
-tac corrections   # Shows recent autocorrections
+tac tui        # or tac -t
 ```
+
+This opens a real-time dashboard showing:
+- Daemon status and PID
+- Recent autocorrections with timestamps  
+- Top corrected commands
+- Current configuration
+- Live statistics
+
+Press `r` to refresh, `q` to quit.
 
 ## Windows Notes
 
@@ -102,6 +110,7 @@ The tool is fully supported on Windows with the following platform-specific beha
 | `tac start` | Launch the daemon as a background process |
 | `tac stop` | Stop the running daemon |
 | `tac status` | Check whether the daemon is running |
+| `tac tui` or `tac -t` | Open terminal user interface dashboard |
 | `tac init <shell>` | Output the shell hook snippet for `bash`, `zsh`, or `powershell` |
 | `tac corrections` | List all autocorrections applied in the current session |
 | `tac config set <key> <value>` | Set a configuration value |

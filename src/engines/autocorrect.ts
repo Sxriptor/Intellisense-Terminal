@@ -1,5 +1,7 @@
 import { distance } from "fastest-levenshtein";
 import type { KnownCommandsCorpus } from "../corpus.js";
+import { getDefaultCorrectionsDictionary } from "../corrections-dictionary.js";
+import type { CorrectionsDictionaryManager } from "../corrections-dictionary.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -19,6 +21,7 @@ export interface MatchResult {
 
 export interface AutocorrectEngineOptions {
   maxEditDistance?: number;
+  correctionsDictionary?: CorrectionsDictionaryManager;
 }
 
 // ---------------------------------------------------------------------------
@@ -141,11 +144,13 @@ export class AutocorrectEngine {
   private readonly corpus: KnownCommandsCorpus;
   private readonly maxEditDistance: number;
   private readonly fuzzy: FuzzyMatcher;
+  private readonly corrections: CorrectionsDictionaryManager;
 
   constructor(corpus: KnownCommandsCorpus, options: AutocorrectEngineOptions = {}) {
     this.corpus = corpus;
     this.maxEditDistance = options.maxEditDistance ?? 2;
     this.fuzzy = new FuzzyMatcher();
+    this.corrections = options.correctionsDictionary ?? getDefaultCorrectionsDictionary();
   }
 
   /**
@@ -212,13 +217,11 @@ export class AutocorrectEngine {
       return { status: "unchanged", original };
     }
 
-    // 4.7 Apply built-in rules first (for git)
-    if (command === "git") {
-      const builtIn = GIT_CORRECTIONS[subToken];
-      if (builtIn !== undefined && knownSubs.has(builtIn)) {
-        const corrected = this._rebuildCommand(tokens, 1, builtIn);
-        return { status: "corrected", corrected, original };
-      }
+    // Check corrections dictionary first (replaces built-in git rules)
+    const dictionaryCorrection = this.corrections.getCorrection(command, subToken);
+    if (dictionaryCorrection && knownSubs.has(dictionaryCorrection)) {
+      const corrected = this._rebuildCommand(tokens, 1, dictionaryCorrection);
+      return { status: "corrected", corrected, original };
     }
 
     // Fuzzy match against known subcommands
@@ -233,6 +236,13 @@ export class AutocorrectEngine {
    */
   private _correctCommand(tokens: string[], original: string): AutocorrectResult {
     const firstToken = tokens[0]!;
+
+    // Check corrections dictionary first for command-level corrections
+    const dictionaryCorrection = this.corrections.getCommandCorrection(firstToken);
+    if (dictionaryCorrection && this.corpus.commands.has(dictionaryCorrection)) {
+      const corrected = this._rebuildCommand(tokens, 0, dictionaryCorrection);
+      return { status: "corrected", corrected, original };
+    }
 
     // Fuzzy match against all known commands
     const commandCorpus = Array.from(this.corpus.commands);

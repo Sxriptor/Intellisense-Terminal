@@ -1,0 +1,70 @@
+{
+  "version": "1.0.0",
+  "description": "Common terminal command corrections - expandable with AI-generated corrections",
+  "corrections": [
+    {
+      "incorrect": "comit",
+      "correct": "commit",
+      "command": "git",
+      "confidence": 0.95,
+      "category": "git-basic"
+    },
+    {
+      "incorrect": "statsu",
+      "correct": "status", 
+      "command": "git",
+      "confidence": 0.95,
+      "category": "git-basic"
+    },
+    {
+      "incorrect": "isntall",
+      "correct": "install",
+      "command": "npm",
+      "confidence": 0.95,
+      "category": "npm-basic"
+    },
+    {
+      "incorrect": "statr",
+      "correct": "start",
+      "command": "npm", 
+      "confidence": 0.95,
+      "category": "npm-basic"
+    },
+    {
+      "incorrect": "sl",
+      "correct": "ls",
+      "confidence": 0.90,
+      "category": "shell-basic"
+    },
+    {
+      "incorrect": "ehco",
+      "correct": "echo",
+      "confidence": 0.95,
+      "category": "shell-basic"
+    },
+    {
+      "incorrect": "grpe",
+      "correct": "grep",
+      "confidence": 0.95,
+      "category": "shell-basic"
+    },
+    {
+      "incorrect": "mkdri",
+      "correct": "mkdir",
+      "confidence": 0.95,
+      "category": "shell-basic"
+    },
+    {
+      "incorrect": "sudp",
+      "correct": "sudo",
+      "confidence": 0.95,
+      "category": "shell-basic"
+    },
+    {
+      "incorrect": "cd..",
+      "correct": "cd ..",
+      "confidence": 1.0,
+      "category": "shell-basic"
+    }
+  ]
+}

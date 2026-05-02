@@ -474,12 +474,32 @@ export function buildProgram(): Command {
       cmdInit(shell);
     });
 
-  // --- corrections ---
+  // --- tui ---
+  program
+    .command("tui")
+    .alias("t")
+    .description("Open terminal user interface dashboard")
+    .action(async () => {
+      const { startTUI } = await import("./tui.js");
+      await startTUI();
+    });
   program
     .command("corrections")
     .description("List all autocorrections applied in the current session")
     .action(async () => {
       await cmdCorrections();
+    });
+
+  // --- dictionary ---
+  const dictionaryCmd = program
+    .command("dictionary")
+    .description("Manage corrections dictionary");
+
+  dictionaryCmd
+    .command("stats")
+    .description("Show corrections dictionary statistics")
+    .action(async () => {
+      await cmdDictionaryStats();
     });
 
   // --- config ---
@@ -524,6 +544,34 @@ export function buildProgram(): Command {
   return program;
 }
 
+/**
+ * Dictionary stats command - show corrections dictionary statistics
+ */
+export async function cmdDictionaryStats(): Promise<void> {
+  const { getDefaultCorrectionsDictionary } = await import("./corrections-dictionary.js");
+  
+  const dictionary = getDefaultCorrectionsDictionary();
+  const stats = dictionary.getStats();
+  
+  process.stdout.write(`Corrections Dictionary Statistics:\n`);
+  process.stdout.write(`  Total corrections: ${stats.totalCorrections}\n`);
+  process.stdout.write(`  Command-specific: ${stats.commandSpecific}\n`);
+  process.stdout.write(`  Global corrections: ${stats.global}\n`);
+  process.stdout.write(`  Supported commands: ${stats.commands.join(', ')}\n`);
+  
+  // Show some examples for each command
+  for (const command of stats.commands.slice(0, 3)) {
+    const corrections = dictionary.getCommandCorrections(command);
+    const examples = Array.from(corrections.entries()).slice(0, 3);
+    if (examples.length > 0) {
+      process.stdout.write(`\n  ${command} examples:\n`);
+      for (const [incorrect, correct] of examples) {
+        process.stdout.write(`    ${incorrect} → ${correct}\n`);
+      }
+    }
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Entry point
 // ---------------------------------------------------------------------------
@@ -566,11 +614,28 @@ if (isMain) {
       process.exit(1);
     }
   } else {
-    // Normal Commander-based CLI
-    const program = buildProgram();
-    program.parseAsync(process.argv).catch((err: unknown) => {
-      process.stderr.write(`Error: ${String(err)}\n`);
-      process.exit(1);
-    });
+    // Check for -t/--tui flag before Commander parsing
+    const tuiIndex = process.argv.indexOf("-t");
+    const tuiLongIndex = process.argv.indexOf("--tui");
+    
+    if (tuiIndex !== -1 || tuiLongIndex !== -1) {
+      // Dynamic import and start TUI
+      import("./tui.js").then(({ startTUI }) => {
+        startTUI().catch((err: unknown) => {
+          process.stderr.write(`TUI Error: ${String(err)}\n`);
+          process.exit(1);
+        });
+      }).catch((err: unknown) => {
+        process.stderr.write(`Failed to load TUI: ${String(err)}\n`);
+        process.exit(1);
+      });
+    } else {
+      // Normal Commander-based CLI
+      const program = buildProgram();
+      program.parseAsync(process.argv).catch((err: unknown) => {
+        process.stderr.write(`Error: ${String(err)}\n`);
+        process.exit(1);
+      });
+    }
   }
 }
