@@ -1,0 +1,37 @@
+{
+  "name": "terminal-autocorrect",
+  "version": "0.1.0",
+  "description": "A lightweight terminal daemon that provides autocorrect, inline ghost-text suggestions, and memory-based next-command prediction.",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "terminal-autocorrect": "./dist/cli.js",
+    "tac": "./dist/cli.js"
+  },
+  "files": [
+    "dist/",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "dev": "tsc --project tsconfig.json --watch",
+    "test": "vitest --run",
+    "test:unit": "vitest --run src/__tests__/unit",
+    "test:property": "vitest --run src/__tests__/property",
+    "test:integration": "vitest --run src/__tests__/integration"
+  },
+  "dependencies": {
+    "commander": "12.1.0",
+    "fastest-levenshtein": "1.0.16"
+  },
+  "devDependencies": {
+    "@types/node": "20.14.0",
+    "fast-check": "3.21.0",
+    "typescript": "5.5.2",
+    "vitest": "1.6.0"
+  }
+}

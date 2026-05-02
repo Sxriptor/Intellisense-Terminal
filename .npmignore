@@ -1,0 +1,25 @@
+# TypeScript source files
+src/
+
+# Test files
+*.test.ts
+*.spec.ts
+src/__tests__/
+
+# Source maps (note: dist/*.map files are included via the package.json "files" allowlist)
+*.map
+
+# TypeScript configuration
+tsconfig.json
+vitest.config.ts
+
+# Spec documents and Kiro workspace files
+.kiro/
+
+# Development files
+.git/
+.gitignore
+package-lock.json
+
+# Miscellaneous
+details
