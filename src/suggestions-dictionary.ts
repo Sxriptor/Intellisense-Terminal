@@ -9,6 +9,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { dirname } from "node:path";
+import { TAC_HOME } from "./paths.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -116,7 +117,7 @@ export class SuggestionsDictionaryManager {
   private suggestionsFile: string;
   
   constructor(suggestionsFile?: string) {
-    this.suggestionsFile = suggestionsFile || join(process.cwd(), 'suggestions', 'learned.json');
+    this.suggestionsFile = suggestionsFile || join(TAC_HOME, 'learned-suggestions.json');
     this.loadBuiltinSuggestions();
   }
   
@@ -318,10 +319,20 @@ export function getDefaultSuggestionsDictionary(): SuggestionsDictionaryManager 
 export async function initializeSuggestionsDictionary(sources: string[] = []): Promise<SuggestionsDictionaryManager> {
   const manager = new SuggestionsDictionaryManager();
   
+  // Try to load from default package locations if no sources provided
+  if (sources.length === 0) {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+    const defaultSources = [
+      join(__dirname, '..', 'suggestions', 'common.json'),
+    ];
+    sources = defaultSources;
+  }
+  
   // Load from sources
   await Promise.all(sources.map(source => manager.loadFromFile(source)));
   
-  // Load learned suggestions
+  // Load learned suggestions from user directory
   await manager.loadLearnedSuggestions();
   
   defaultManager = manager;

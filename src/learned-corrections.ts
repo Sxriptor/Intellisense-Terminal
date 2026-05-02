@@ -7,6 +7,7 @@
 
 import { readFile, writeFile } from "node:fs/promises";
 import { join, dirname } from "node:path";
+import { TAC_HOME } from "./paths.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -46,7 +47,7 @@ export class LearnedCorrectionsManager {
   private correctionsFile: string;
   
   constructor(correctionsFile?: string) {
-    this.correctionsFile = correctionsFile || join(process.cwd(), 'corrections', 'learned.json');
+    this.correctionsFile = correctionsFile || join(TAC_HOME, 'learned-corrections.json');
   }
   
   /**

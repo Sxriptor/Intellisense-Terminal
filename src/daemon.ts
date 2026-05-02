@@ -1,5 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { unlink } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 
 import { ConfigManager } from "./config.js";
 import { KnownCommandsCorpus } from "./corpus.js";
@@ -17,6 +19,8 @@ import { PID_FILE_PATH, SOCKET_PATH, IS_WINDOWS } from "./paths.js";
 import { writePidFile, deletePidFile } from "./storage.js";
 import { initializeSuggestionsDictionary, getDefaultSuggestionsDictionary } from "./suggestions-dictionary.js";
 import type { SuggestionsDictionaryManager } from "./suggestions-dictionary.js";
+import { initializeLearnedCorrections, getDefaultLearnedCorrections } from "./learned-corrections.js";
+import type { LearnedCorrectionsManager } from "./learned-corrections.js";
 
 // ---------------------------------------------------------------------------
 // Daemon
@@ -51,6 +55,7 @@ export class Daemon {
   private autocorrectEngine: AutocorrectEngine | null = null;
   private suggestionEngine: SuggestionEngine | null = null;
   private suggestionsDict: SuggestionsDictionaryManager | null = null;
+  private learnedCorrections: LearnedCorrectionsManager | null = null;
   private ipcServer: IPCServer | null = null;
 
   /** Random UUID generated once per daemon start (9.3). */
@@ -116,13 +121,17 @@ export class Daemon {
     const { suggestionProvider, memoryProvider } = await this._loadProviders();
 
     // Initialize suggestions dictionary
-    this.suggestionsDict = await initializeSuggestionsDictionary([
-      'suggestions/common.json'
-    ]);
+    this.suggestionsDict = await initializeSuggestionsDictionary();
+
+    // Initialize learned corrections
+    this.learnedCorrections = await initializeLearnedCorrections();
 
     // Build engines
     const maxEditDistance = this.configManager.get("maxEditDistance");
-    this.autocorrectEngine = new AutocorrectEngine(this.corpus, { maxEditDistance });
+    this.autocorrectEngine = new AutocorrectEngine(this.corpus, { 
+      maxEditDistance,
+      learnedCorrections: this.learnedCorrections 
+    });
 
     this.suggestionEngine = new SuggestionEngine(suggestionProvider);
 

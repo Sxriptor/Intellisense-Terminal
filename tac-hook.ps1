@@ -68,8 +68,10 @@ if (Get-Module -ListAvailable -Name PSReadLine) {
     if ($global:_TacSuggestionShown) {
       # Remove the ghost text by replacing with just the actual input
       $actualInput = $line.Substring(0, $cursor)
-      [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $line.Length, $actualInput)
-      [Microsoft.PowerShell.PSConsoleReadLine]::SetCursorPosition($cursor)
+      if ($line.Length -gt 0) {
+        [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $line.Length, $actualInput)
+      }
+      [Microsoft.PowerShell.PSConsoleReadLine]::SetCursorPosition($actualInput.Length)
       $global:_TacSuggestionShown = $false
     }
     
@@ -145,12 +147,28 @@ if (Get-Module -ListAvailable -Name PSReadLine) {
   # Tab key to accept suggestion
   Set-PSReadLineKeyHandler -Key Tab -ScriptBlock {
     if ($global:_TacCurrentSuggestion -and $global:_TacSuggestionShown) {
-      # Accept the suggestion - replace entire line
-      [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, 999, $global:_TacCurrentSuggestion)
-      
-      # Clear suggestion state
-      $global:_TacCurrentSuggestion = $null
-      $global:_TacSuggestionShown = $false
+      try {
+        # Accept the suggestion - replace entire line properly
+        $line = $null
+        $cursor = $null
+        [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$line, [ref]$cursor)
+        
+        # Replace with the full suggestion
+        if ($line.Length -gt 0) {
+          [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $line.Length, $global:_TacCurrentSuggestion)
+        } else {
+          [Microsoft.PowerShell.PSConsoleReadLine]::Insert($global:_TacCurrentSuggestion)
+        }
+        
+        # Clear suggestion state
+        $global:_TacCurrentSuggestion = $null
+        $global:_TacSuggestionShown = $false
+      } catch {
+        # If there's an error, just clear the state and do default tab
+        $global:_TacCurrentSuggestion = $null
+        $global:_TacSuggestionShown = $false
+        [Microsoft.PowerShell.PSConsoleReadLine]::TabCompleteNext()
+      }
     } else {
       # Default tab behavior (completion)
       [Microsoft.PowerShell.PSConsoleReadLine]::TabCompleteNext()
@@ -160,12 +178,28 @@ if (Get-Module -ListAvailable -Name PSReadLine) {
   # Right arrow to accept suggestion (like VS Code)
   Set-PSReadLineKeyHandler -Key RightArrow -ScriptBlock {
     if ($global:_TacCurrentSuggestion -and $global:_TacSuggestionShown) {
-      # Accept the suggestion - replace entire line
-      [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, 999, $global:_TacCurrentSuggestion)
-      
-      # Clear suggestion state
-      $global:_TacCurrentSuggestion = $null
-      $global:_TacSuggestionShown = $false
+      try {
+        # Accept the suggestion - replace entire line properly
+        $line = $null
+        $cursor = $null
+        [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$line, [ref]$cursor)
+        
+        # Replace with the full suggestion
+        if ($line.Length -gt 0) {
+          [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $line.Length, $global:_TacCurrentSuggestion)
+        } else {
+          [Microsoft.PowerShell.PSConsoleReadLine]::Insert($global:_TacCurrentSuggestion)
+        }
+        
+        # Clear suggestion state
+        $global:_TacCurrentSuggestion = $null
+        $global:_TacSuggestionShown = $false
+      } catch {
+        # If there's an error, just clear the state and do default right arrow
+        $global:_TacCurrentSuggestion = $null
+        $global:_TacSuggestionShown = $false
+        [Microsoft.PowerShell.PSConsoleReadLine]::ForwardChar()
+      }
     } else {
       # Default right arrow behavior
       [Microsoft.PowerShell.PSConsoleReadLine]::ForwardChar()
@@ -175,16 +209,24 @@ if (Get-Module -ListAvailable -Name PSReadLine) {
   # Escape to dismiss suggestion
   Set-PSReadLineKeyHandler -Key Escape -ScriptBlock {
     if ($global:_TacSuggestionShown) {
-      # Clear the suggestion by replacing with just the actual input
-      $line = $null
-      $cursor = $null
-      [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$line, [ref]$cursor)
-      $actualInput = $line.Substring(0, $cursor)
-      [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $line.Length, $actualInput)
-      [Microsoft.PowerShell.PSConsoleReadLine]::SetCursorPosition($actualInput.Length)
-      
-      $global:_TacCurrentSuggestion = $null
-      $global:_TacSuggestionShown = $false
+      try {
+        # Clear the suggestion by replacing with just the actual input
+        $line = $null
+        $cursor = $null
+        [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$line, [ref]$cursor)
+        $actualInput = $line.Substring(0, $cursor)
+        if ($line.Length -gt 0) {
+          [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $line.Length, $actualInput)
+        }
+        [Microsoft.PowerShell.PSConsoleReadLine]::SetCursorPosition($actualInput.Length)
+        
+        $global:_TacCurrentSuggestion = $null
+        $global:_TacSuggestionShown = $false
+      } catch {
+        # If there's an error, just clear the state
+        $global:_TacCurrentSuggestion = $null
+        $global:_TacSuggestionShown = $false
+      }
     } else {
       # Default escape behavior
       [Microsoft.PowerShell.PSConsoleReadLine]::RevertLine()
