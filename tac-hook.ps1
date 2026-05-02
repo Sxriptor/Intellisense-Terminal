@@ -24,8 +24,10 @@ function _TacSend {
   }
 }
 
-# Initialize guard variable
+# Initialize guard variable and suggestion state
 $global:_TacInHook = $false
+$global:_TacCurrentSuggestion = $null
+$global:_TacSuggestionShown = $false
 
 # Autocorrect: Use PSReadLine to intercept the full command line before execution
 if (Get-Module -ListAvailable -Name PSReadLine) {
@@ -45,8 +47,106 @@ if (Get-Module -ListAvailable -Name PSReadLine) {
       }
     }
     
+    # Clear any suggestion state
+    $global:_TacCurrentSuggestion = $null
+    $global:_TacSuggestionShown = $false
+    
     # Execute the command
     [Microsoft.PowerShell.PSConsoleReadLine]::AcceptLine()
+  }
+
+  # Ghost text suggestions on space key
+  Set-PSReadLineKeyHandler -Key Space -ScriptBlock {
+    # First insert the space
+    [Microsoft.PowerShell.PSConsoleReadLine]::Insert(' ')
+    
+    # Then check for suggestions
+    $line = $null
+    $cursor = $null
+    [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$line, [ref]$cursor)
+    
+    if ($line -and $line.Trim()) {
+      $suggestion = _TacSend -Type 'suggest' -Buffer $line.Trim()
+      
+      if ($suggestion -and $suggestion -ne $line.Trim() -and $suggestion.StartsWith($line.Trim())) {
+        # Show ghost text (gray text after cursor)
+        $ghostText = $suggestion.Substring($line.Length)
+        if ($ghostText) {
+          $global:_TacCurrentSuggestion = $suggestion
+          $global:_TacSuggestionShown = $true
+          
+          # Save current cursor position
+          $currentPos = $cursor
+          
+          # Insert ghost text in gray
+          [Microsoft.PowerShell.PSConsoleReadLine]::Insert($ghostText)
+          [Microsoft.PowerShell.PSConsoleReadLine]::SetCursorPosition($currentPos)
+          
+          # Color the ghost text gray (this is a simplified approach)
+          # Note: PSReadLine doesn't have great APIs for coloring partial text
+          # This is a best-effort implementation
+        }
+      }
+    }
+  }
+
+  # Tab key to accept suggestion
+  Set-PSReadLineKeyHandler -Key Tab -ScriptBlock {
+    if ($global:_TacCurrentSuggestion -and $global:_TacSuggestionShown) {
+      # Accept the suggestion
+      $line = $null
+      $cursor = $null
+      [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$line, [ref]$cursor)
+      
+      # Replace entire line with suggestion
+      [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $line.Length, $global:_TacCurrentSuggestion)
+      
+      # Clear suggestion state
+      $global:_TacCurrentSuggestion = $null
+      $global:_TacSuggestionShown = $false
+    } else {
+      # Default tab behavior (completion)
+      [Microsoft.PowerShell.PSConsoleReadLine]::TabCompleteNext()
+    }
+  }
+
+  # Right arrow to accept suggestion
+  Set-PSReadLineKeyHandler -Key RightArrow -ScriptBlock {
+    if ($global:_TacCurrentSuggestion -and $global:_TacSuggestionShown) {
+      # Accept the suggestion
+      $line = $null
+      $cursor = $null
+      [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$line, [ref]$cursor)
+      
+      # Replace entire line with suggestion
+      [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $line.Length, $global:_TacCurrentSuggestion)
+      
+      # Clear suggestion state
+      $global:_TacCurrentSuggestion = $null
+      $global:_TacSuggestionShown = $false
+    } else {
+      # Default right arrow behavior
+      [Microsoft.PowerShell.PSConsoleReadLine]::ForwardChar()
+    }
+  }
+
+  # Clear suggestions on other keys
+  Set-PSReadLineKeyHandler -Key Backspace -ScriptBlock {
+    $global:_TacCurrentSuggestion = $null
+    $global:_TacSuggestionShown = $false
+    [Microsoft.PowerShell.PSConsoleReadLine]::BackwardDeleteChar()
+  }
+
+  Set-PSReadLineKeyHandler -Key Delete -ScriptBlock {
+    $global:_TacCurrentSuggestion = $null
+    $global:_TacSuggestionShown = $false
+    [Microsoft.PowerShell.PSConsoleReadLine]::DeleteChar()
+  }
+
+  Set-PSReadLineKeyHandler -Key Escape -ScriptBlock {
+    $global:_TacCurrentSuggestion = $null
+    $global:_TacSuggestionShown = $false
+    [Microsoft.PowerShell.PSConsoleReadLine]::RevertLine()
   }
 }
 

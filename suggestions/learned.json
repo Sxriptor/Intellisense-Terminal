@@ -1,0 +1,175 @@
+{
+  "version": "1.0.0",
+  "description": "Learned command suggestions",
+  "suggestions": [
+    {
+      "prefix": "tac dictionary",
+      "completion": "tac dictionary suggestions",
+      "frequency": 2,
+      "lastUsed": "2026-05-02T10:31:57.416Z",
+      "command": "tac",
+      "confidence": 0.5
+    },
+    {
+      "prefix": "Copy-Item tac-hook.ps1",
+      "completion": "Copy-Item tac-hook.ps1 $env:USERPROFILE\\Documents\\WindowsPowerShell\\tac-hook.ps1 -Force",
+      "frequency": 2,
+      "lastUsed": "2026-05-02T10:32:29.047Z",
+      "command": "Copy-Item",
+      "confidence": 0.5
+    },
+    {
+      "prefix": "Copy-Item tac-hook.ps1 $env:USERPROFILE\\Documents\\WindowsPowerShell\\tac-hook.ps1",
+      "completion": "Copy-Item tac-hook.ps1 $env:USERPROFILE\\Documents\\WindowsPowerShell\\tac-hook.ps1 -Force",
+      "frequency": 2,
+      "lastUsed": "2026-05-02T10:32:29.047Z",
+      "command": "Copy-Item",
+      "confidence": 0.5
+    },
+    {
+      "prefix": "tac --ipc",
+      "completion": "tac --ipc suggest --buffer g",
+      "frequency": 3,
+      "lastUsed": "2026-05-02T10:32:16.683Z",
+      "command": "tac",
+      "confidence": 0.5
+    },
+    {
+      "prefix": "tac --ipc suggest",
+      "completion": "tac --ipc suggest --buffer g",
+      "frequency": 3,
+      "lastUsed": "2026-05-02T10:32:16.683Z",
+      "command": "tac",
+      "confidence": 0.5
+    },
+    {
+      "prefix": "tac --ipc suggest --buffer",
+      "completion": "tac --ipc suggest --buffer g",
+      "frequency": 3,
+      "lastUsed": "2026-05-02T10:32:16.683Z",
+      "command": "tac",
+      "confidence": 0.5
+    },
+    {
+      "prefix": "Copy-Item terminal_command_suggestions_4plus_prefixes.json",
+      "completion": "Copy-Item terminal_command_suggestions_4plus_prefixes.json suggestions/common.json -Force",
+      "frequency": 1,
+      "lastUsed": "2026-05-02T10:31:20.696Z",
+      "command": "Copy-Item",
+      "confidence": 0.5
+    },
+    {
+      "prefix": "Copy-Item terminal_command_suggestions_4plus_prefixes.json suggestions/common.json",
+      "completion": "Copy-Item terminal_command_suggestions_4plus_prefixes.json suggestions/common.json -Force",
+      "frequency": 1,
+      "lastUsed": "2026-05-02T10:31:20.696Z",
+      "command": "Copy-Item",
+      "confidence": 0.5
+    },
+    {
+      "prefix": "npm run",
+      "completion": "npm run build",
+      "frequency": 1,
+      "lastUsed": "2026-05-02T10:31:27.607Z",
+      "command": "npm",
+      "confidence": 0.5
+    },
+    {
+      "prefix": "tac stop",
+      "completion": "tac stop && tac start",
+      "frequency": 1,
+      "lastUsed": "2026-05-02T10:31:41.699Z",
+      "command": "tac",
+      "confidence": 0.5
+    },
+    {
+      "prefix": "tac stop &&",
+      "completion": "tac stop && tac start",
+      "frequency": 1,
+      "lastUsed": "2026-05-02T10:31:41.699Z",
+      "command": "tac",
+      "confidence": 0.5
+    },
+    {
+      "prefix": "tac stop && tac",
+      "completion": "tac stop && tac start",
+      "frequency": 1,
+      "lastUsed": "2026-05-02T10:31:41.699Z",
+      "command": "tac",
+      "confidence": 0.5
+    },
+    {
+      "prefix": "Get-Content suggestions/common.json",
+      "completion": "Get-Content suggestions/common.json | Select-Object -First 5",
+      "frequency": 1,
+      "lastUsed": "2026-05-02T10:32:05.389Z",
+      "command": "Get-Content",
+      "confidence": 0.5
+    },
+    {
+      "prefix": "Get-Content suggestions/common.json |",
+      "completion": "Get-Content suggestions/common.json | Select-Object -First 5",
+      "frequency": 1,
+      "lastUsed": "2026-05-02T10:32:05.390Z",
+      "command": "Get-Content",
+      "confidence": 0.5
+    },
+    {
+      "prefix": "Get-Content suggestions/common.json | Select-Object",
+      "completion": "Get-Content suggestions/common.json | Select-Object -First 5",
+      "frequency": 1,
+      "lastUsed": "2026-05-02T10:32:05.390Z",
+      "command": "Get-Content",
+      "confidence": 0.5
+    },
+    {
+      "prefix": "Get-Content suggestions/common.json | Select-Object -First",
+      "completion": "Get-Content suggestions/common.json | Select-Object -First 5",
+      "frequency": 1,
+      "lastUsed": "2026-05-02T10:32:05.390Z",
+      "command": "Get-Content",
+      "confidence": 0.5
+    },
+    {
+      "prefix": "try {",
+      "completion": "try { . c:\\Users\\coler\\AppData\\Local\\Programs\\Kiro\\resources\\app\\out\\vs\\workbench\\contrib\\terminal\\common\\scripts\\shellIntegration.ps1 } catch {}",
+      "frequency": 1,
+      "lastUsed": "2026-05-02T10:33:04.289Z",
+      "command": "try",
+      "confidence": 0.5
+    },
+    {
+      "prefix": "try { .",
+      "completion": "try { . c:\\Users\\coler\\AppData\\Local\\Programs\\Kiro\\resources\\app\\out\\vs\\workbench\\contrib\\terminal\\common\\scripts\\shellIntegration.ps1 } catch {}",
+      "frequency": 1,
+      "lastUsed": "2026-05-02T10:33:04.289Z",
+      "command": "try",
+      "confidence": 0.5
+    }
+  ]
+}{
+      "prefix": "try { . c:\\Users\\coler\\AppData\\Local\\Programs\\Kiro\\resources\\app\\out\\vs\\workbench\\contrib\\terminal\\common\\scripts\\shellIntegration.ps1",
+      "completion": "try { . c:\\Users\\coler\\AppData\\Local\\Programs\\Kiro\\resources\\app\\out\\vs\\workbench\\contrib\\terminal\\common\\scripts\\shellIntegration.ps1 } catch {}",
+      "frequency": 1,
+      "lastUsed": "2026-05-02T10:33:04.289Z",
+      "command": "try",
+      "confidence": 0.5
+    },
+    {
+      "prefix": "try { . c:\\Users\\coler\\AppData\\Local\\Programs\\Kiro\\resources\\app\\out\\vs\\workbench\\contrib\\terminal\\common\\scripts\\shellIntegration.ps1 }",
+      "completion": "try { . c:\\Users\\coler\\AppData\\Local\\Programs\\Kiro\\resources\\app\\out\\vs\\workbench\\contrib\\terminal\\common\\scripts\\shellIntegration.ps1 } catch {}",
+      "frequency": 1,
+      "lastUsed": "2026-05-02T10:33:04.290Z",
+      "command": "try",
+      "confidence": 0.5
+    },
+    {
+      "prefix": "try { . c:\\Users\\coler\\AppData\\Local\\Programs\\Kiro\\resources\\app\\out\\vs\\workbench\\contrib\\terminal\\common\\scripts\\shellIntegration.ps1 } catch",
+      "completion": "try { . c:\\Users\\coler\\AppData\\Local\\Programs\\Kiro\\resources\\app\\out\\vs\\workbench\\contrib\\terminal\\common\\scripts\\shellIntegration.ps1 } catch {}",
+      "frequency": 1,
+      "lastUsed": "2026-05-02T10:33:04.290Z",
+      "command": "try",
+      "confidence": 0.5
+    }
+  ]
+}

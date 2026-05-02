@@ -502,6 +502,13 @@ export function buildProgram(): Command {
       await cmdDictionaryStats();
     });
 
+  dictionaryCmd
+    .command("suggestions")
+    .description("Show suggestions dictionary statistics")
+    .action(async () => {
+      await cmdSuggestionsStats();
+    });
+
   // --- config ---
   const configCmd = program
     .command("config")
@@ -542,6 +549,27 @@ export function buildProgram(): Command {
     });
 
   return program;
+}
+
+/**
+ * Suggestions stats command - show suggestions dictionary statistics
+ */
+export async function cmdSuggestionsStats(): Promise<void> {
+  const { getDefaultSuggestionsDictionary } = await import("./suggestions-dictionary.js");
+  
+  const dictionary = getDefaultSuggestionsDictionary();
+  const stats = dictionary.getStats();
+  
+  process.stdout.write(`Suggestions Dictionary Statistics:\n`);
+  process.stdout.write(`  Total suggestions: ${stats.totalSuggestions}\n`);
+  process.stdout.write(`  Built-in suggestions: ${stats.builtinSuggestions}\n`);
+  process.stdout.write(`  Learned suggestions: ${stats.learnedSuggestions}\n`);
+  process.stdout.write(`  Supported commands: ${stats.commands.join(', ')}\n`);
+  
+  process.stdout.write(`\n  Top suggestions by frequency:\n`);
+  for (const suggestion of stats.topSuggestions.slice(0, 5)) {
+    process.stdout.write(`    "${suggestion.prefix}" → "${suggestion.completion}" (${suggestion.frequency} uses)\n`);
+  }
 }
 
 /**

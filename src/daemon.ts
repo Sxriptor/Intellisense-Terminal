@@ -15,6 +15,8 @@ import { IPCServer } from "./ipc.js";
 import type { IPCRequest, DaemonResponse, CorrectionRecord } from "./ipc.js";
 import { PID_FILE_PATH, SOCKET_PATH, IS_WINDOWS } from "./paths.js";
 import { writePidFile, deletePidFile } from "./storage.js";
+import { initializeSuggestionsDictionary, getDefaultSuggestionsDictionary } from "./suggestions-dictionary.js";
+import type { SuggestionsDictionaryManager } from "./suggestions-dictionary.js";
 
 // ---------------------------------------------------------------------------
 // Daemon
@@ -48,6 +50,7 @@ export class Daemon {
   private memoryEngine: MemoryEngine | null = null;
   private autocorrectEngine: AutocorrectEngine | null = null;
   private suggestionEngine: SuggestionEngine | null = null;
+  private suggestionsDict: SuggestionsDictionaryManager | null = null;
   private ipcServer: IPCServer | null = null;
 
   /** Random UUID generated once per daemon start (9.3). */
@@ -111,6 +114,11 @@ export class Daemon {
 
     // 9.5 — load external providers (or fall back to built-in)
     const { suggestionProvider, memoryProvider } = await this._loadProviders();
+
+    // Initialize suggestions dictionary
+    this.suggestionsDict = await initializeSuggestionsDictionary([
+      'suggestions/common.json'
+    ]);
 
     // Build engines
     const maxEditDistance = this.configManager.get("maxEditDistance");
@@ -273,11 +281,19 @@ export class Daemon {
   }
 
   private _handleSuggest(request: IPCRequest): DaemonResponse {
-    if (this.suggestionEngine === null || this.memoryEngine === null) {
+    if (this.suggestionEngine === null || this.memoryEngine === null || this.suggestionsDict === null) {
       return {};
     }
 
     const buffer = request.buffer ?? "";
+    
+    // First try the suggestions dictionary for fast prefix matching
+    const dictSuggestion = this.suggestionsDict.getSuggestion(buffer);
+    if (dictSuggestion && dictSuggestion !== buffer) {
+      return { ghost: dictSuggestion };
+    }
+
+    // Fall back to the original suggestion engine (memory-based)
     const history = this.memoryEngine.getHistory();
     const result = this.suggestionEngine.suggest(buffer, history);
 
@@ -296,6 +312,20 @@ export class Daemon {
     const command = request.buffer ?? "";
     if (command.trim() !== "") {
       this.memoryEngine.record(command, request.sessionId ?? this.sessionId);
+      
+      // Learn suggestions from executed commands
+      if (this.suggestionsDict && command.includes(' ')) {
+        const tokens = command.split(' ');
+        if (tokens.length >= 2) {
+          // Learn prefix patterns: "git st" -> "git status"
+          for (let i = 1; i < tokens.length; i++) {
+            const prefix = tokens.slice(0, i + 1).join(' ');
+            if (prefix.length >= 3 && prefix !== command) {
+              this.suggestionsDict.learnSuggestion(prefix, command, tokens[0]);
+            }
+          }
+        }
+      }
     }
 
     return {};

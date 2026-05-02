@@ -2,6 +2,8 @@ import { distance } from "fastest-levenshtein";
 import type { KnownCommandsCorpus } from "../corpus.js";
 import { getDefaultCorrectionsDictionary } from "../corrections-dictionary.js";
 import type { CorrectionsDictionaryManager } from "../corrections-dictionary.js";
+import { getDefaultLearnedCorrections } from "../learned-corrections.js";
+import type { LearnedCorrectionsManager } from "../learned-corrections.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -22,6 +24,7 @@ export interface MatchResult {
 export interface AutocorrectEngineOptions {
   maxEditDistance?: number;
   correctionsDictionary?: CorrectionsDictionaryManager;
+  learnedCorrections?: LearnedCorrectionsManager;
 }
 
 // ---------------------------------------------------------------------------
@@ -145,12 +148,14 @@ export class AutocorrectEngine {
   private readonly maxEditDistance: number;
   private readonly fuzzy: FuzzyMatcher;
   private readonly corrections: CorrectionsDictionaryManager;
+  private readonly learnedCorrections: LearnedCorrectionsManager;
 
   constructor(corpus: KnownCommandsCorpus, options: AutocorrectEngineOptions = {}) {
     this.corpus = corpus;
     this.maxEditDistance = options.maxEditDistance ?? 2;
     this.fuzzy = new FuzzyMatcher();
     this.corrections = options.correctionsDictionary ?? getDefaultCorrectionsDictionary();
+    this.learnedCorrections = options.learnedCorrections ?? getDefaultLearnedCorrections();
   }
 
   /**
@@ -217,7 +222,14 @@ export class AutocorrectEngine {
       return { status: "unchanged", original };
     }
 
-    // Check corrections dictionary first (replaces built-in git rules)
+    // Check learned corrections first (highest priority)
+    const learnedCorrection = this.learnedCorrections.getCorrection(command, subToken);
+    if (learnedCorrection && knownSubs.has(learnedCorrection)) {
+      const corrected = this._rebuildCommand(tokens, 1, learnedCorrection);
+      return { status: "corrected", corrected, original };
+    }
+
+    // Check corrections dictionary second
     const dictionaryCorrection = this.corrections.getCorrection(command, subToken);
     if (dictionaryCorrection && knownSubs.has(dictionaryCorrection)) {
       const corrected = this._rebuildCommand(tokens, 1, dictionaryCorrection);
@@ -237,7 +249,14 @@ export class AutocorrectEngine {
   private _correctCommand(tokens: string[], original: string): AutocorrectResult {
     const firstToken = tokens[0]!;
 
-    // Check corrections dictionary first for command-level corrections
+    // Check learned corrections first (highest priority)
+    const learnedCorrection = this.learnedCorrections.getCommandCorrection(firstToken);
+    if (learnedCorrection && this.corpus.commands.has(learnedCorrection)) {
+      const corrected = this._rebuildCommand(tokens, 0, learnedCorrection);
+      return { status: "corrected", corrected, original };
+    }
+
+    // Check corrections dictionary second
     const dictionaryCorrection = this.corrections.getCommandCorrection(firstToken);
     if (dictionaryCorrection && this.corpus.commands.has(dictionaryCorrection)) {
       const corrected = this._rebuildCommand(tokens, 0, dictionaryCorrection);
