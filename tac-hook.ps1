@@ -28,24 +28,20 @@ function _TacSend {
 $global:_TacInHook = $false
 
 # Autocorrect: Use PSReadLine to intercept the full command line before execution
-# This works for all commands, including external executables like git, npm, etc.
 if (Get-Module -ListAvailable -Name PSReadLine) {
   Set-PSReadLineKeyHandler -Key Enter -ScriptBlock {
     $line = $null
     $cursor = $null
     [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$line, [ref]$cursor)
     
-    if ($line) {
-      # Extract the first word (command name) from the line
-      $firstWord = ($line -split '\s+')[0]
-      if ($firstWord) {
-        $corrected = _TacSend -Type 'correct' -Buffer $firstWord
-        if ($corrected -and $corrected -ne $firstWord) {
-          # Replace the first word with the corrected version
-          $newLine = $line -replace "^$([regex]::Escape($firstWord))", $corrected
-          [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $line.Length, $newLine)
-          Write-Host "`n`u{2713} autocorrected: $firstWord -> $corrected" -ForegroundColor Green
-        }
+    if ($line -and $line.Trim()) {
+      # Send the ENTIRE command line to the daemon for correction
+      $corrected = _TacSend -Type 'correct' -Buffer $line.Trim()
+      
+      if ($corrected -and $corrected -ne $line.Trim() -and $corrected.Trim()) {
+        # Replace the entire line with the corrected version
+        [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $line.Length, $corrected)
+        Write-Host "`nAutocorrected: $($line.Trim()) -> $corrected" -ForegroundColor Green
       }
     }
     
@@ -54,17 +50,24 @@ if (Get-Module -ListAvailable -Name PSReadLine) {
   }
 }
 
-# Record executed commands + show next-command prediction via prompt hook
+# Record executed commands in prompt (simplified for speed)
 $null = New-Variable -Name _TacOriginalPrompt -Value (Get-Item Function:\prompt -ErrorAction SilentlyContinue).ScriptBlock -Scope Global -Force -ErrorAction SilentlyContinue
 function global:prompt {
+  # Record history without blocking
   $lastId = (Get-History -Count 1 -ErrorAction SilentlyContinue).Id
   if ($null -ne $lastId -and $lastId -ne $global:_TacLastRecordedId) {
     $global:_TacLastRecordedId = $lastId
     $lastCmd = (Get-History -Id $lastId -ErrorAction SilentlyContinue).CommandLine
-    if ($lastCmd) { _TacSend -Type 'record' -Buffer $lastCmd | Out-Null }
+    if ($lastCmd) { 
+      # Record in background
+      Start-Job -ScriptBlock { 
+        param($cmd) 
+        & tac --ipc record --buffer $cmd 2>$null 
+      } -ArgumentList $lastCmd | Out-Null
+    }
   }
-  $prediction = _TacSend -Type 'suggest' -Buffer ''
-  if ($prediction) { Write-Host "  hint: $prediction" -ForegroundColor DarkGray }
+  
+  # Call original prompt
   if ($null -ne $global:_TacOriginalPrompt) {
     & $global:_TacOriginalPrompt
   } else {
