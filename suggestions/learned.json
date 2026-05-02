@@ -13,16 +13,16 @@
     {
       "prefix": "Copy-Item tac-hook.ps1",
       "completion": "Copy-Item tac-hook.ps1 $env:USERPROFILE\\Documents\\WindowsPowerShell\\tac-hook.ps1 -Force",
-      "frequency": 2,
-      "lastUsed": "2026-05-02T10:32:29.047Z",
+      "frequency": 4,
+      "lastUsed": "2026-05-02T10:40:53.734Z",
       "command": "Copy-Item",
       "confidence": 0.5
     },
     {
       "prefix": "Copy-Item tac-hook.ps1 $env:USERPROFILE\\Documents\\WindowsPowerShell\\tac-hook.ps1",
       "completion": "Copy-Item tac-hook.ps1 $env:USERPROFILE\\Documents\\WindowsPowerShell\\tac-hook.ps1 -Force",
-      "frequency": 2,
-      "lastUsed": "2026-05-02T10:32:29.047Z",
+      "frequency": 4,
+      "lastUsed": "2026-05-02T10:40:53.734Z",
       "command": "Copy-Item",
       "confidence": 0.5
     },
@@ -69,8 +69,8 @@
     {
       "prefix": "npm run",
       "completion": "npm run build",
-      "frequency": 1,
-      "lastUsed": "2026-05-02T10:31:27.607Z",
+      "frequency": 4,
+      "lastUsed": "2026-05-02T10:42:08.092Z",
       "command": "npm",
       "confidence": 0.5
     },
@@ -133,42 +133,97 @@
     {
       "prefix": "try {",
       "completion": "try { . c:\\Users\\coler\\AppData\\Local\\Programs\\Kiro\\resources\\app\\out\\vs\\workbench\\contrib\\terminal\\common\\scripts\\shellIntegration.ps1 } catch {}",
-      "frequency": 1,
-      "lastUsed": "2026-05-02T10:33:04.289Z",
+      "frequency": 3,
+      "lastUsed": "2026-05-02T10:41:03.247Z",
       "command": "try",
       "confidence": 0.5
     },
     {
       "prefix": "try { .",
       "completion": "try { . c:\\Users\\coler\\AppData\\Local\\Programs\\Kiro\\resources\\app\\out\\vs\\workbench\\contrib\\terminal\\common\\scripts\\shellIntegration.ps1 } catch {}",
-      "frequency": 1,
-      "lastUsed": "2026-05-02T10:33:04.289Z",
+      "frequency": 3,
+      "lastUsed": "2026-05-02T10:41:03.247Z",
       "command": "try",
       "confidence": 0.5
-    }
-  ]
-}{
+    },
+    {
       "prefix": "try { . c:\\Users\\coler\\AppData\\Local\\Programs\\Kiro\\resources\\app\\out\\vs\\workbench\\contrib\\terminal\\common\\scripts\\shellIntegration.ps1",
       "completion": "try { . c:\\Users\\coler\\AppData\\Local\\Programs\\Kiro\\resources\\app\\out\\vs\\workbench\\contrib\\terminal\\common\\scripts\\shellIntegration.ps1 } catch {}",
-      "frequency": 1,
-      "lastUsed": "2026-05-02T10:33:04.289Z",
+      "frequency": 3,
+      "lastUsed": "2026-05-02T10:41:03.247Z",
       "command": "try",
       "confidence": 0.5
     },
     {
       "prefix": "try { . c:\\Users\\coler\\AppData\\Local\\Programs\\Kiro\\resources\\app\\out\\vs\\workbench\\contrib\\terminal\\common\\scripts\\shellIntegration.ps1 }",
       "completion": "try { . c:\\Users\\coler\\AppData\\Local\\Programs\\Kiro\\resources\\app\\out\\vs\\workbench\\contrib\\terminal\\common\\scripts\\shellIntegration.ps1 } catch {}",
-      "frequency": 1,
-      "lastUsed": "2026-05-02T10:33:04.290Z",
+      "frequency": 3,
+      "lastUsed": "2026-05-02T10:41:03.247Z",
       "command": "try",
       "confidence": 0.5
     },
     {
       "prefix": "try { . c:\\Users\\coler\\AppData\\Local\\Programs\\Kiro\\resources\\app\\out\\vs\\workbench\\contrib\\terminal\\common\\scripts\\shellIntegration.ps1 } catch",
       "completion": "try { . c:\\Users\\coler\\AppData\\Local\\Programs\\Kiro\\resources\\app\\out\\vs\\workbench\\contrib\\terminal\\common\\scripts\\shellIntegration.ps1 } catch {}",
-      "frequency": 1,
-      "lastUsed": "2026-05-02T10:33:04.290Z",
+      "frequency": 3,
+      "lastUsed": "2026-05-02T10:41:03.247Z",
       "command": "try",
+      "confidence": 0.5
+    },
+    {
+      "prefix": "git add",
+      "completion": "git add .",
+      "frequency": 2,
+      "lastUsed": "2026-05-02T10:42:09.946Z",
+      "command": "git",
+      "confidence": 0.5
+    },
+    {
+      "prefix": "git commit",
+      "completion": "git commit -m 'adding the suggestions'",
+      "frequency": 1,
+      "lastUsed": "2026-05-02T10:33:25.534Z",
+      "command": "git",
+      "confidence": 0.5
+    },
+    {
+      "prefix": "git commit -m",
+      "completion": "git commit -m 'adding the suggestions'",
+      "frequency": 1,
+      "lastUsed": "2026-05-02T10:33:25.534Z",
+      "command": "git",
+      "confidence": 0.5
+    },
+    {
+      "prefix": "git commit -m 'adding",
+      "completion": "git commit -m 'adding the suggestions'",
+      "frequency": 1,
+      "lastUsed": "2026-05-02T10:33:25.534Z",
+      "command": "git",
+      "confidence": 0.5
+    },
+    {
+      "prefix": "git commit -m 'adding the",
+      "completion": "git commit -m 'adding the suggestions'",
+      "frequency": 1,
+      "lastUsed": "2026-05-02T10:33:25.534Z",
+      "command": "git",
+      "confidence": 0.5
+    },
+    {
+      "prefix": "git push",
+      "completion": "git push origin main",
+      "frequency": 2,
+      "lastUsed": "2026-05-02T10:33:34.810Z",
+      "command": "git",
+      "confidence": 0.5
+    },
+    {
+      "prefix": "git push origin",
+      "completion": "git push origin main",
+      "frequency": 2,
+      "lastUsed": "2026-05-02T10:33:34.810Z",
+      "command": "git",
       "confidence": 0.5
     }
   ]

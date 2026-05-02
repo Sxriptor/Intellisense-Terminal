@@ -55,51 +55,98 @@ if (Get-Module -ListAvailable -Name PSReadLine) {
     [Microsoft.PowerShell.PSConsoleReadLine]::AcceptLine()
   }
 
-  # Ghost text suggestions on space key
-  Set-PSReadLineKeyHandler -Key Space -ScriptBlock {
-    # First insert the space
-    [Microsoft.PowerShell.PSConsoleReadLine]::Insert(' ')
-    
-    # Then check for suggestions
+  # Real-time suggestions as you type - automatic like VS Code IntelliSense
+  # We'll use a more sophisticated approach with PSReadLine's character handlers
+  
+  # Function to update suggestions in real-time
+  function Update-TacSuggestion {
     $line = $null
     $cursor = $null
     [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$line, [ref]$cursor)
     
-    if ($line -and $line.Trim()) {
+    # Clear any existing suggestion display first
+    if ($global:_TacSuggestionShown) {
+      # Remove the ghost text by replacing with just the actual input
+      $actualInput = $line.Substring(0, $cursor)
+      [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $line.Length, $actualInput)
+      [Microsoft.PowerShell.PSConsoleReadLine]::SetCursorPosition($cursor)
+      $global:_TacSuggestionShown = $false
+    }
+    
+    if ($line -and $line.Trim().Length -gt 0) {
       $suggestion = _TacSend -Type 'suggest' -Buffer $line.Trim()
       
       if ($suggestion -and $suggestion -ne $line.Trim() -and $suggestion.StartsWith($line.Trim())) {
-        # Show ghost text (gray text after cursor)
-        $ghostText = $suggestion.Substring($line.Length)
+        # Calculate the ghost text (what comes after current input)
+        $ghostText = $suggestion.Substring($line.Trim().Length)
+        
         if ($ghostText) {
           $global:_TacCurrentSuggestion = $suggestion
           $global:_TacSuggestionShown = $true
           
-          # Save current cursor position
+          # Insert ghost text after cursor
           $currentPos = $cursor
-          
-          # Insert ghost text in gray
           [Microsoft.PowerShell.PSConsoleReadLine]::Insert($ghostText)
           [Microsoft.PowerShell.PSConsoleReadLine]::SetCursorPosition($currentPos)
-          
-          # Color the ghost text gray (this is a simplified approach)
-          # Note: PSReadLine doesn't have great APIs for coloring partial text
-          # This is a best-effort implementation
         }
+      } else {
+        $global:_TacCurrentSuggestion = $null
+        $global:_TacSuggestionShown = $false
       }
     }
+  }
+  
+  # Hook into all printable characters to show suggestions as you type
+  # This creates real-time IntelliSense-like behavior
+  for ($i = 32; $i -le 126; $i++) {
+    $char = [char]$i
+    if ($char -match '[a-zA-Z0-9\-\._/\\]') {  # Only hook alphanumeric and common symbols
+      Set-PSReadLineKeyHandler -Chord $char -ScriptBlock {
+        param($key, $arg)
+        
+        # Insert the character first
+        [Microsoft.PowerShell.PSConsoleReadLine]::Insert($key.KeyChar)
+        
+        # Then update suggestions
+        Update-TacSuggestion
+      }.GetNewClosure()
+    }
+  }
+  
+  # Also hook space for command completion
+  Set-PSReadLineKeyHandler -Chord ' ' -ScriptBlock {
+    # Insert the space
+    [Microsoft.PowerShell.PSConsoleReadLine]::Insert(' ')
+    
+    # Update suggestions after space
+    Update-TacSuggestion
+  }
+  
+  # Hook backspace to update suggestions when deleting
+  Set-PSReadLineKeyHandler -Key Backspace -ScriptBlock {
+    # Clear suggestion state first
+    if ($global:_TacSuggestionShown) {
+      $line = $null
+      $cursor = $null
+      [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$line, [ref]$cursor)
+      $actualInput = $line.Substring(0, $cursor)
+      [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $line.Length, $actualInput)
+      [Microsoft.PowerShell.PSConsoleReadLine]::SetCursorPosition($cursor)
+      $global:_TacSuggestionShown = $false
+    }
+    
+    # Do the backspace
+    [Microsoft.PowerShell.PSConsoleReadLine]::BackwardDeleteChar()
+    
+    # Update suggestions after deletion
+    Update-TacSuggestion
   }
 
   # Tab key to accept suggestion
   Set-PSReadLineKeyHandler -Key Tab -ScriptBlock {
     if ($global:_TacCurrentSuggestion -and $global:_TacSuggestionShown) {
-      # Accept the suggestion
-      $line = $null
-      $cursor = $null
-      [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$line, [ref]$cursor)
-      
-      # Replace entire line with suggestion
-      [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $line.Length, $global:_TacCurrentSuggestion)
+      # Accept the suggestion - replace entire line
+      [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, 999, $global:_TacCurrentSuggestion)
       
       # Clear suggestion state
       $global:_TacCurrentSuggestion = $null
@@ -110,16 +157,11 @@ if (Get-Module -ListAvailable -Name PSReadLine) {
     }
   }
 
-  # Right arrow to accept suggestion
+  # Right arrow to accept suggestion (like VS Code)
   Set-PSReadLineKeyHandler -Key RightArrow -ScriptBlock {
     if ($global:_TacCurrentSuggestion -and $global:_TacSuggestionShown) {
-      # Accept the suggestion
-      $line = $null
-      $cursor = $null
-      [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$line, [ref]$cursor)
-      
-      # Replace entire line with suggestion
-      [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $line.Length, $global:_TacCurrentSuggestion)
+      # Accept the suggestion - replace entire line
+      [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, 999, $global:_TacCurrentSuggestion)
       
       # Clear suggestion state
       $global:_TacCurrentSuggestion = $null
@@ -130,23 +172,43 @@ if (Get-Module -ListAvailable -Name PSReadLine) {
     }
   }
 
-  # Clear suggestions on other keys
-  Set-PSReadLineKeyHandler -Key Backspace -ScriptBlock {
-    $global:_TacCurrentSuggestion = $null
-    $global:_TacSuggestionShown = $false
-    [Microsoft.PowerShell.PSConsoleReadLine]::BackwardDeleteChar()
-  }
-
-  Set-PSReadLineKeyHandler -Key Delete -ScriptBlock {
-    $global:_TacCurrentSuggestion = $null
-    $global:_TacSuggestionShown = $false
-    [Microsoft.PowerShell.PSConsoleReadLine]::DeleteChar()
-  }
-
+  # Escape to dismiss suggestion
   Set-PSReadLineKeyHandler -Key Escape -ScriptBlock {
-    $global:_TacCurrentSuggestion = $null
-    $global:_TacSuggestionShown = $false
-    [Microsoft.PowerShell.PSConsoleReadLine]::RevertLine()
+    if ($global:_TacSuggestionShown) {
+      # Clear the suggestion by replacing with just the actual input
+      $line = $null
+      $cursor = $null
+      [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$line, [ref]$cursor)
+      $actualInput = $line.Substring(0, $cursor)
+      [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $line.Length, $actualInput)
+      [Microsoft.PowerShell.PSConsoleReadLine]::SetCursorPosition($actualInput.Length)
+      
+      $global:_TacCurrentSuggestion = $null
+      $global:_TacSuggestionShown = $false
+    } else {
+      # Default escape behavior
+      [Microsoft.PowerShell.PSConsoleReadLine]::RevertLine()
+    }
+  }
+
+  # Delete key also updates suggestions
+  Set-PSReadLineKeyHandler -Key Delete -ScriptBlock {
+    # Clear suggestion state first
+    if ($global:_TacSuggestionShown) {
+      $line = $null
+      $cursor = $null
+      [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$line, [ref]$cursor)
+      $actualInput = $line.Substring(0, $cursor)
+      [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $line.Length, $actualInput)
+      [Microsoft.PowerShell.PSConsoleReadLine]::SetCursorPosition($cursor)
+      $global:_TacSuggestionShown = $false
+    }
+    
+    # Do the delete
+    [Microsoft.PowerShell.PSConsoleReadLine]::DeleteChar()
+    
+    # Update suggestions after deletion
+    Update-TacSuggestion
   }
 }
 
