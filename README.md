@@ -21,44 +21,68 @@ npm install -g terminal-autocorrect
 
 ## Quick Start
 
-### 1. Start the daemon
+### 1. Install
+
+```sh
+npm install -g terminal-autocorrect
+```
+
+### 2. Start the daemon
 
 ```sh
 tac start
 ```
 
-### 2. Add the shell hook
+### 3. Add the shell hook
 
-For **zsh**, add this to your `~/.zshrc`:
-
-```zsh
-eval "$(tac init zsh)"
-```
-
-For **bash**, add this to your `~/.bashrc` or `~/.bash_profile`:
-
-```bash
-eval "$(tac init bash)"
-```
-
-For **PowerShell** (Windows), add this to your `$PROFILE`:
+**For PowerShell (Windows):**
 
 ```powershell
-Invoke-Expression (& tac init powershell)
+# Copy the hook to a permanent location
+tac init powershell > "$env:USERPROFILE\Documents\WindowsPowerShell\tac-hook.ps1"
+
+# Add this line to your PowerShell profile ($PROFILE)
+echo '. "$env:USERPROFILE\Documents\WindowsPowerShell\tac-hook.ps1"' >> $PROFILE
+
+# Reload your profile
+. $PROFILE
 ```
 
-Then reload your shell:
+**For zsh (macOS/Linux):**
 
-```sh
-source ~/.zshrc   # zsh
-source ~/.bashrc  # bash
-# PowerShell: restart your terminal or run `. $PROFILE`
+```zsh
+# Add to ~/.zshrc
+echo 'eval "$(tac init zsh)"' >> ~/.zshrc
+
+# Reload
+source ~/.zshrc
 ```
 
-### 3. Verify it's running
+**For bash (Linux):**
+
+```bash
+# Add to ~/.bashrc
+echo 'eval "$(tac init bash)"' >> ~/.bashrc
+
+# Reload  
+source ~/.bashrc
+```
+
+### 4. Test it
+
+Try typing a command with a typo:
 
 ```sh
-tac status
+git statsu    # Press Enter → autocorrects to "git status"
+npm isntall   # Press Enter → autocorrects to "npm install"
+docker ps -a  # Works with any command
+```
+
+### 5. Verify it's working
+
+```sh
+tac status        # Should show "running"
+tac corrections   # Shows recent autocorrections
 ```
 
 ## Windows Notes
