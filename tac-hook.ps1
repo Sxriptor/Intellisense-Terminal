@@ -89,38 +89,44 @@ if (Get-Module -ListAvailable -Name PSReadLine) {
     $cursor = $null
     [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$line, [ref]$cursor)
     
-    # Clear any existing suggestion display first
+    # Get the actual user input (everything before cursor)
+    $actualInput = if ($line.Length -gt 0) { $line.Substring(0, $cursor) } else { "" }
+    
+    if ($actualInput -and $actualInput.Trim().Length -gt 0) {
+      $suggestion = _TacSend -Type 'suggest' -Buffer $actualInput.Trim()
+      
+      if ($suggestion -and $suggestion -ne $actualInput.Trim() -and $suggestion.StartsWith($actualInput.Trim())) {
+        # Calculate the ghost text (what comes after current input)
+        $ghostText = $suggestion.Substring($actualInput.Trim().Length)
+        
+        if ($ghostText) {
+          # Replace entire line with actual input + ghost text
+          if ($line.Length -gt 0) {
+            [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $line.Length, $actualInput + $ghostText)
+          } else {
+            [Microsoft.PowerShell.PSConsoleReadLine]::Insert($actualInput + $ghostText)
+          }
+          
+          # Set cursor back to end of actual input
+          [Microsoft.PowerShell.PSConsoleReadLine]::SetCursorPosition($actualInput.Length)
+          
+          $global:_TacCurrentSuggestion = $suggestion
+          $global:_TacSuggestionShown = $true
+          return
+        }
+      }
+    }
+    
+    # No suggestion available - clear any existing ghost text
     if ($global:_TacSuggestionShown) {
-      # Remove the ghost text by replacing with just the actual input
-      $actualInput = $line.Substring(0, $cursor)
       if ($line.Length -gt 0) {
         [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $line.Length, $actualInput)
       }
       [Microsoft.PowerShell.PSConsoleReadLine]::SetCursorPosition($actualInput.Length)
-      $global:_TacSuggestionShown = $false
     }
     
-    if ($line -and $line.Trim().Length -gt 0) {
-      $suggestion = _TacSend -Type 'suggest' -Buffer $line.Trim()
-      
-      if ($suggestion -and $suggestion -ne $line.Trim() -and $suggestion.StartsWith($line.Trim())) {
-        # Calculate the ghost text (what comes after current input)
-        $ghostText = $suggestion.Substring($line.Trim().Length)
-        
-        if ($ghostText) {
-          $global:_TacCurrentSuggestion = $suggestion
-          $global:_TacSuggestionShown = $true
-          
-          # Insert ghost text after cursor
-          $currentPos = $cursor
-          [Microsoft.PowerShell.PSConsoleReadLine]::Insert($ghostText)
-          [Microsoft.PowerShell.PSConsoleReadLine]::SetCursorPosition($currentPos)
-        }
-      } else {
-        $global:_TacCurrentSuggestion = $null
-        $global:_TacSuggestionShown = $false
-      }
-    }
+    $global:_TacCurrentSuggestion = $null
+    $global:_TacSuggestionShown = $false
   }
   
   # Hook into all printable characters to show suggestions as you type
