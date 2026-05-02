@@ -12,8 +12,10 @@ import { IS_WINDOWS } from "./paths.js";
  * domain socket.
  */
 export interface IPCRequest {
-  type: "correct" | "suggest" | "record" | "corrections" | "status";
+  type: "correct" | "suggest" | "record" | "corrections" | "status" | "learn";
   buffer?: string;
+  prefix?: string;
+  completion?: string;
   sessionId: string;
   requestId: string; // for matching responses
 }

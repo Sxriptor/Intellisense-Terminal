@@ -617,8 +617,34 @@ if (isMain) {
     const ipcType = process.argv[ipcIndex + 1] as IPCRequest["type"] | undefined;
     const bufferIndex = process.argv.indexOf("--buffer");
     const ipcBuffer = bufferIndex !== -1 ? (process.argv[bufferIndex + 1] ?? "") : "";
+    
+    // Handle learn command specially
+    if (ipcType === "learn") {
+      const prefixIndex = process.argv.indexOf("--prefix");
+      const completionIndex = process.argv.indexOf("--completion");
+      const prefix = prefixIndex !== -1 ? (process.argv[prefixIndex + 1] ?? "") : "";
+      const completion = completionIndex !== -1 ? (process.argv[completionIndex + 1] ?? "") : "";
+      
+      if (prefix && completion) {
+        // Close stdin immediately to prevent hanging
+        try { process.stdin.destroy(); } catch { /* ignore */ }
 
-    if (ipcType) {
+        const client = new IPCClient();
+        const request: IPCRequest = {
+          type: "learn",
+          prefix,
+          completion,
+          sessionId: randomUUID(),
+          requestId: randomUUID(),
+        };
+
+        client.send(SOCKET_PATH, request, 2000).then(() => {
+          process.exit(0);
+        }).catch(() => process.exit(0));
+      } else {
+        process.exit(1);
+      }
+    } else if (ipcType) {
       // Close stdin immediately to prevent hanging
       try { process.stdin.destroy(); } catch { /* ignore */ }
 

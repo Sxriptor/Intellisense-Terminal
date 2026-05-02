@@ -250,6 +250,9 @@ export class Daemon {
       case "corrections":
         return { corrections: [...this.correctionsLog] };
 
+      case "learn":
+        return this._handleLearn(request);
+
       case "status":
         return {};
 
@@ -335,6 +338,22 @@ export class Daemon {
           }
         }
       }
+    }
+
+    return {};
+  }
+
+  private _handleLearn(request: IPCRequest): DaemonResponse {
+    if (this.suggestionsDict === null) {
+      return {};
+    }
+
+    const prefix = request.prefix ?? "";
+    const completion = request.completion ?? "";
+    
+    if (prefix && completion && prefix !== completion) {
+      // Learn this pattern
+      this.suggestionsDict.learnSuggestion(prefix, completion);
     }
 
     return {};

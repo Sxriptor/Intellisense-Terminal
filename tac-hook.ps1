@@ -37,6 +37,9 @@ if (Get-Module -ListAvailable -Name PSReadLine) {
     [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$line, [ref]$cursor)
     
     if ($line -and $line.Trim()) {
+      # Learn from this command before correction
+      $originalCommand = $line.Trim()
+      
       # Send the ENTIRE command line to the daemon for correction
       $corrected = _TacSend -Type 'correct' -Buffer $line.Trim()
       
@@ -44,6 +47,12 @@ if (Get-Module -ListAvailable -Name PSReadLine) {
         # Replace the entire line with the corrected version
         [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $line.Length, $corrected)
         Write-Host "`nAutocorrected: $($line.Trim()) -> $corrected" -ForegroundColor Green
+        
+        # Learn from the corrected command
+        Learn-TypingPattern -Command $corrected
+      } else {
+        # Learn from the original command (no correction needed)
+        Learn-TypingPattern -Command $originalCommand
       }
     }
     
@@ -58,6 +67,22 @@ if (Get-Module -ListAvailable -Name PSReadLine) {
   # Real-time suggestions as you type - automatic like VS Code IntelliSense
   # We'll use a more sophisticated approach with PSReadLine's character handlers
   
+  # Function to learn from typing patterns
+  function Learn-TypingPattern {
+    param([string]$Command)
+    
+    if ($Command -and $Command.Length -gt 2) {
+      # Learn prefixes for this command
+      for ($i = 1; $i -lt $Command.Length; $i++) {
+        $prefix = $Command.Substring(0, $i)
+        if ($prefix.Length -ge 1) {
+          # Send learning request to daemon
+          & tac --ipc learn --prefix $prefix --completion $Command 2>$null | Out-Null
+        }
+      }
+    }
+  }
+
   # Function to update suggestions in real-time
   function Update-TacSuggestion {
     $line = $null
