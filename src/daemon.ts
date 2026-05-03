@@ -355,7 +355,7 @@ export class Daemon {
     const completion = request.completion ?? "";
     
     if (prefix && completion && prefix !== completion) {
-      // Learn this pattern
+      // sanitizeCommandForSuggestion is applied inside learnSuggestion
       this.suggestionsDict.learnSuggestion(prefix, completion);
     }
 

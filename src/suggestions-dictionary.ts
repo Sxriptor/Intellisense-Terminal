@@ -108,8 +108,57 @@ const BUILTIN_SUGGESTIONS: SuggestionEntry[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// SuggestionsDictionaryManager
+// Command sanitization
+// Strips dynamic content (commit messages, file paths, URLs, branch names, etc.)
+// before storing a command as a suggestion template.
 // ---------------------------------------------------------------------------
+
+/**
+ * Rules for sanitizing learned commands into reusable suggestion templates.
+ *
+ * Only strip quoted string content (commit messages, tag messages, etc.)
+ * Everything else — branch names, remote names, file paths, flags — is kept
+ * because those are useful to suggest back.
+ *
+ * Examples:
+ *   git commit -m 'my message'        →  git commit -m ''
+ *   git commit -m "fix: update docs"  →  git commit -m ""
+ *   git pull origin main              →  git pull origin main  (unchanged)
+ *   git checkout -b feature/foo       →  git checkout -b feature/foo  (unchanged)
+ *   git checkout main                 →  git checkout main  (unchanged)
+ */
+const SANITIZE_RULES: Array<{ pattern: RegExp; replacement: string }> = [
+  // Strip content inside single quotes but keep the quotes
+  { pattern: /'[^']*'/g, replacement: "''" },
+  // Strip content inside double quotes but keep the quotes
+  { pattern: /"[^"]*"/g, replacement: '""' },
+  // Strip content inside backticks but keep the backticks
+  { pattern: /`[^`]*`/g, replacement: "``" },
+];
+
+/**
+ * Sanitize a command before storing it as a suggestion template.
+ * Returns null if the command should not be learned at all.
+ */
+export function sanitizeCommandForSuggestion(command: string): string | null {
+  const trimmed = command.trim();
+  if (!trimmed) return null;
+
+  let result = trimmed;
+
+  for (const rule of SANITIZE_RULES) {
+    result = result.replace(rule.pattern, rule.replacement);
+  }
+
+  result = result.trim();
+
+  // Don't learn if result is too short to be useful
+  if (result.length < 2) return null;
+
+  return result;
+}
+
+
 
 export class SuggestionsDictionaryManager {
   private suggestions = new Map<string, SuggestionEntry>();
@@ -235,33 +284,33 @@ export class SuggestionsDictionaryManager {
   }
   
   /**
-   * Learn a new suggestion from user behavior
+   * Learn a new suggestion from user behavior.
+   * Only strips quoted string content (commit messages) before storing.
    */
   learnSuggestion(prefix: string, completion: string, command?: string): void {
+    // Only sanitize quoted content — keep everything else as-is
+    const sanitized = sanitizeCommandForSuggestion(completion);
+    if (!sanitized) return;
+
     const existing = this.learnedSuggestions.get(prefix);
     
     if (existing) {
-      // Update existing
       existing.frequency++;
       existing.lastUsed = new Date().toISOString();
-      existing.completion = completion; // Update in case it changed
+      existing.completion = sanitized;
     } else {
-      // Create new
       const entry: SuggestionEntry = {
         prefix,
-        completion,
+        completion: sanitized,
         frequency: 1,
         lastUsed: new Date().toISOString(),
         command,
-        confidence: 0.5, // Start with medium confidence
+        confidence: 0.5,
       };
       this.learnedSuggestions.set(prefix, entry);
     }
     
-    // Also add to main suggestions
     this.suggestions.set(prefix, this.learnedSuggestions.get(prefix)!);
-    
-    // Save asynchronously
     this.saveLearnedSuggestions().catch(() => {});
   }
   
