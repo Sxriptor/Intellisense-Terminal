@@ -150,6 +150,41 @@ $global:_TacInHook = $false
 $global:_TacCurrentSuggestion = $null
 $global:_TacSuggestionShown = $false
 
+# Paste detection state
+# _TacPasting: set by Ctrl+V handler, cleared after cooldown
+# _TacLastInputTime: epoch-ms of last character insertion (burst detection)
+# _TacPasteModeUntil: epoch-ms until which paste/burst mode is active
+$global:_TacPasting = $false
+$global:_TacLastInputTime = [long]0
+$global:_TacPasteModeUntil = [long]0
+
+function _TacIsInPasteMode {
+  # Returns $true when we should suppress autocorrect/suggestions.
+  # Covers: Ctrl+V flag, burst detection (chars arriving < 8 ms apart).
+  $now = [System.DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
+  $timeSinceLast = $now - $global:_TacLastInputTime
+  if ($timeSinceLast -lt 8) {
+    # Characters arriving very fast — treat as paste burst, extend cooldown
+    $global:_TacPasteModeUntil = $now + 300
+  }
+  $global:_TacLastInputTime = $now
+  return ($global:_TacPasting -or ($now -lt $global:_TacPasteModeUntil))
+}
+
+function _TacClearGhostText {
+  if ($global:_TacSuggestionShown) {
+    $line = $null; $cursor = $null
+    [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$line, [ref]$cursor)
+    $actualInput = if ($line.Length -gt 0) { $line.Substring(0, $cursor) } else { "" }
+    if ($line.Length -gt 0) {
+      [Microsoft.PowerShell.PSConsoleReadLine]::Replace(0, $line.Length, $actualInput)
+      [Microsoft.PowerShell.PSConsoleReadLine]::SetCursorPosition($actualInput.Length)
+    }
+    $global:_TacSuggestionShown = $false
+    $global:_TacCurrentSuggestion = $null
+  }
+}
+
 # Autocorrect: Use PSReadLine to intercept the full command line before execution
 if (Get-Module -ListAvailable -Name PSReadLine) {
   Set-PSReadLineKeyHandler -Key Enter -ScriptBlock {
@@ -171,6 +206,7 @@ if (Get-Module -ListAvailable -Name PSReadLine) {
         
         # Learn from the corrected command
         Learn-TypingPattern -Command $corrected
+
       } else {
         # Learn from the original command (no correction needed)
         Learn-TypingPattern -Command $originalCommand
@@ -257,28 +293,36 @@ if (Get-Module -ListAvailable -Name PSReadLine) {
     if ($char -match '[a-zA-Z0-9\\-\\._/\\\\]') {  # Only hook alphanumeric and common symbols
       Set-PSReadLineKeyHandler -Chord $char -ScriptBlock {
         param($key, $arg)
-        
-        # Insert the character first
         [Microsoft.PowerShell.PSConsoleReadLine]::Insert($key.KeyChar)
-        
-        # Then update suggestions
-        Update-TacSuggestion
+        if (-not (_TacIsInPasteMode)) {
+          Update-TacSuggestion
+        }
       }.GetNewClosure()
     }
   }
   
   # Also hook space for command completion
   Set-PSReadLineKeyHandler -Chord ' ' -ScriptBlock {
-    # Insert the space
     [Microsoft.PowerShell.PSConsoleReadLine]::Insert(' ')
-    
-    # Update suggestions after space
-    Update-TacSuggestion
+    if (-not (_TacIsInPasteMode)) {
+      Update-TacSuggestion
+    }
+  }
+
+  # Ctrl+V paste — clear ghost text, enter paste mode, do the paste, exit after 300ms
+  Set-PSReadLineKeyHandler -Chord 'Ctrl+v' -ScriptBlock {
+    _TacClearGhostText
+    $global:_TacPasting = $true
+    $global:_TacPasteModeUntil = [System.DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() + 300
+    [Microsoft.PowerShell.PSConsoleReadLine]::Paste()
+    $null = [System.Threading.Tasks.Task]::Run({
+      Start-Sleep -Milliseconds 300
+      $global:_TacPasting = $false
+    })
   }
   
   # Hook backspace to update suggestions when deleting
   Set-PSReadLineKeyHandler -Key Backspace -ScriptBlock {
-    # Clear suggestion state first
     if ($global:_TacSuggestionShown) {
       $line = $null
       $cursor = $null
@@ -288,12 +332,10 @@ if (Get-Module -ListAvailable -Name PSReadLine) {
       [Microsoft.PowerShell.PSConsoleReadLine]::SetCursorPosition($cursor)
       $global:_TacSuggestionShown = $false
     }
-    
-    # Do the backspace
     [Microsoft.PowerShell.PSConsoleReadLine]::BackwardDeleteChar()
-    
-    # Update suggestions after deletion
-    Update-TacSuggestion
+    if (-not (_TacIsInPasteMode)) {
+      Update-TacSuggestion
+    }
   }
 
   # Tab key to accept suggestion
@@ -387,7 +429,6 @@ if (Get-Module -ListAvailable -Name PSReadLine) {
 
   # Delete key also updates suggestions
   Set-PSReadLineKeyHandler -Key Delete -ScriptBlock {
-    # Clear suggestion state first
     if ($global:_TacSuggestionShown) {
       $line = $null
       $cursor = $null
@@ -397,12 +438,10 @@ if (Get-Module -ListAvailable -Name PSReadLine) {
       [Microsoft.PowerShell.PSConsoleReadLine]::SetCursorPosition($cursor)
       $global:_TacSuggestionShown = $false
     }
-    
-    # Do the delete
     [Microsoft.PowerShell.PSConsoleReadLine]::DeleteChar()
-    
-    # Update suggestions after deletion
-    Update-TacSuggestion
+    if (-not (_TacIsInPasteMode)) {
+      Update-TacSuggestion
+    }
   }
 }
 
