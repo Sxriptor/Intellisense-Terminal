@@ -16,7 +16,7 @@ A lightweight terminal daemon that provides autocorrect, inline ghost-text sugge
 ## Installation
 
 ```sh
-npm install -g terminalsense
+npm.cmd install -g terminalsense
 ```
 
 ## Quick Start
@@ -24,7 +24,7 @@ npm install -g terminalsense
 ### 1. Install
 
 ```sh
-npm install -g terminalsense
+npm.cmd install -g terminalsense
 ```
 
 ### 2. Set up your shell

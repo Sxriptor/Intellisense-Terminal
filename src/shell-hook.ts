@@ -173,9 +173,17 @@ if (Get-Module -ListAvailable -Name PSReadLine) {
 
     if ($line -and $line.Trim()) {
       $ghost = _TacSend -Type 'suggest' -Buffer $line.Trim()
-      if ($ghost -and $ghost.StartsWith($line.Trim()) -and $ghost.Length -gt $line.Trim().Length) {
-        [Microsoft.PowerShell.PSConsoleReadLine]::Insert($ghost.Substring($line.Trim().Length))
-        return
+      if ($ghost) {
+        # The daemon returns the completion suffix. If a full command is returned,
+        # normalize it down to the inserted suffix.
+        if ($ghost.StartsWith($line.Trim())) {
+          $ghost = $ghost.Substring($line.Trim().Length)
+        }
+
+        if ($ghost) {
+          [Microsoft.PowerShell.PSConsoleReadLine]::Insert($ghost)
+          return
+        }
       }
     }
 
