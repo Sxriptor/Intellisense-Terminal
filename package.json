@@ -1,6 +1,6 @@
 {
   "name": "terminalsense",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "A lightweight terminal daemon that provides autocorrect, inline ghost-text suggestions, and memory-based next-command prediction.",
   "type": "module",
   "engines": {
