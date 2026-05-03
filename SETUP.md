@@ -1,50 +1,20 @@
-# Terminal Autocorrect - Setup Guide
+# terminalsense - Setup Guide
 
 ## Quick Setup (5 minutes)
 
 ### 1. Install
 ```bash
-npm install -g terminal-autocorrect
+npm install -g terminalsense
 ```
 
-### 2. Start the daemon
+### 2. Set up your shell
 ```bash
-tac start
+tac setup
 ```
 
-### 3. Setup shell integration
+This writes the hook file under `~/.terminal-autocorrect/`, updates the relevant shell profile, and starts the daemon. Restart your shell or open a new terminal tab/window after running it.
 
-#### Windows PowerShell
-```powershell
-# Generate and save the hook file
-tac init powershell > "$env:USERPROFILE\Documents\WindowsPowerShell\tac-hook.ps1"
-
-# Add to your PowerShell profile
-Add-Content $PROFILE '. "$env:USERPROFILE\Documents\WindowsPowerShell\tac-hook.ps1"'
-
-# Reload your profile (or restart PowerShell)
-. $PROFILE
-```
-
-#### macOS/Linux (zsh)
-```bash
-# Add to ~/.zshrc
-echo 'eval "$(tac init zsh)"' >> ~/.zshrc
-
-# Reload
-source ~/.zshrc
-```
-
-#### Linux (bash)
-```bash
-# Add to ~/.bashrc  
-echo 'eval "$(tac init bash)"' >> ~/.bashrc
-
-# Reload
-source ~/.bashrc
-```
-
-### 4. Test it!
+### 3. Test it!
 Try typing commands with typos:
 ```bash
 git statsu     # → git status
@@ -52,7 +22,7 @@ npm isntall    # → npm install
 docker ps -a   # → works with any command
 ```
 
-### 5. Verify
+### 4. Verify
 ```bash
 tac status        # Should show "running"
 tac corrections   # Shows recent autocorrections
@@ -81,7 +51,7 @@ tac corrections   # Shows recent autocorrections
 **Want to uninstall?**
 ```bash
 tac stop
-npm uninstall -g terminal-autocorrect
+npm uninstall -g terminalsense
 # Remove the line from your shell profile
 ```
 
@@ -93,3 +63,5 @@ npm uninstall -g terminal-autocorrect
 4. **Fast**: Uses IPC for sub-100ms response times
 
 The tool learns your command patterns and gets better over time!
+
+

@@ -1,4 +1,4 @@
-# terminal-autocorrect
+# terminalsense
 
 A lightweight terminal daemon that provides autocorrect, inline ghost-text suggestions, and memory-based next-command prediction — all without a GUI or Electron runtime.
 
@@ -16,7 +16,7 @@ A lightweight terminal daemon that provides autocorrect, inline ghost-text sugge
 ## Installation
 
 ```sh
-npm install -g terminal-autocorrect
+npm install -g terminalsense
 ```
 
 ## Quick Start
@@ -24,51 +24,26 @@ npm install -g terminal-autocorrect
 ### 1. Install
 
 ```sh
-npm install -g terminal-autocorrect
+npm install -g terminalsense
 ```
 
-### 2. Start the daemon
+### 2. Set up your shell
 
 ```sh
-tac start
+tac setup
 ```
 
-### 3. Add the shell hook
+This installs the shell hook into your profile, writes the hook file under `~/.terminal-autocorrect/`, and starts the daemon.
 
-**For PowerShell (Windows):**
+If auto-detection picks the wrong shell, pass it explicitly:
 
-```powershell
-# Copy the hook to a permanent location
-tac init powershell > "$env:USERPROFILE\Documents\WindowsPowerShell\tac-hook.ps1"
-
-# Add this line to your PowerShell profile ($PROFILE)
-echo '. "$env:USERPROFILE\Documents\WindowsPowerShell\tac-hook.ps1"' >> $PROFILE
-
-# Reload your profile
-. $PROFILE
+```sh
+tac setup bash
+tac setup zsh
+tac setup powershell
 ```
 
-**For zsh (macOS/Linux):**
-
-```zsh
-# Add to ~/.zshrc
-echo 'eval "$(tac init zsh)"' >> ~/.zshrc
-
-# Reload
-source ~/.zshrc
-```
-
-**For bash (Linux):**
-
-```bash
-# Add to ~/.bashrc
-echo 'eval "$(tac init bash)"' >> ~/.bashrc
-
-# Reload  
-source ~/.bashrc
-```
-
-### 4. Test it
+### 3. Test it
 
 Try typing a command with a typo:
 
@@ -78,7 +53,7 @@ npm isntall   # Press Enter → autocorrects to "npm install"
 docker ps -a  # Works with any command
 ```
 
-### 5. Monitor with Terminal UI
+### 4. Monitor with Terminal UI
 
 ```sh
 tac tui        # or tac -t
@@ -111,6 +86,7 @@ The tool is fully supported on Windows with the following platform-specific beha
 | `tac stop` | Stop the running daemon |
 | `tac status` | Check whether the daemon is running |
 | `tac tui` or `tac -t` | Open terminal user interface dashboard |
+| `tac setup [shell]` | Install the shell hook, update the profile, and start the daemon |
 | `tac init <shell>` | Output the shell hook snippet for `bash`, `zsh`, or `powershell` |
 | `tac corrections` | List all autocorrections applied in the current session |
 | `tac config set <key> <value>` | Set a configuration value |
@@ -118,7 +94,7 @@ The tool is fully supported on Windows with the following platform-specific beha
 | `tac config list` | List all configuration keys and their current values |
 | `tac history clear` | Delete all stored command history and patterns |
 
-The `terminal-autocorrect` binary is an alias for `tac` and accepts the same commands.
+The `terminalsense` binary is an alias for `tac` and accepts the same commands.
 
 ## Configuration Reference
 
@@ -166,10 +142,11 @@ All data is stored in `~/.terminal-autocorrect/`:
 
 ```sh
 tac stop
-npm uninstall -g terminal-autocorrect
+npm uninstall -g terminalsense
 rm -rf ~/.terminal-autocorrect
 ```
 
 ## License
 
 MIT
+

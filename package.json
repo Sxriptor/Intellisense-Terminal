@@ -1,20 +1,22 @@
 {
-  "name": "terminal-autocorrect",
+  "name": "terminalsense",
   "version": "0.1.0",
   "description": "A lightweight terminal daemon that provides autocorrect, inline ghost-text suggestions, and memory-based next-command prediction.",
   "type": "module",
   "engines": {
     "node": ">=18.0.0"
   },
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/cli.js",
+  "types": "./dist/cli.d.ts",
   "bin": {
-    "terminal-autocorrect": "./dist/cli.js",
+    "terminalsense": "./dist/cli.js",
     "tac": "./dist/cli.js"
   },
   "files": [
     "dist/",
-    "README.md"
+    "README.md",
+    "corrections/",
+    "suggestions/"
   ],
   "scripts": {
     "build": "tsc --project tsconfig.json",

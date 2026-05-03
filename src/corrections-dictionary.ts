@@ -279,9 +279,6 @@ export async function initializeCorrectionsDictionary(sources: string[] = []): P
   const __dirname = dirname(__filename);
   const defaultSources = [
     join(__dirname, '..', 'corrections', 'common.json'),
-    join(__dirname, '..', 'corrections', 'git.json'),
-    join(__dirname, '..', 'corrections', 'npm.json'),
-    join(__dirname, '..', 'corrections', 'docker.json'),
   ];
   
   await manager.loadFromSources([...defaultSources, ...sources]);

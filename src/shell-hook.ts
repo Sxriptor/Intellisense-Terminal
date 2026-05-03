@@ -19,16 +19,16 @@
  *  - `_tac_zle_widget`: ZLE widget that fires on Tab, sends the current
  *    buffer to the daemon for a ghost-text suggestion, and renders it.
  *
- * The user adds `eval "$(terminal-autocorrect init zsh)"` to their `.zshrc`.
+ * The user adds `eval "$(terminalsense init zsh)"` to their `.zshrc`.
  */
 export function getZshHook(): string {
-  return `# terminal-autocorrect zsh hook
+  return `# terminalsense zsh hook
 # Add this to your ~/.zshrc:
-#   eval "$(terminal-autocorrect init zsh)"
+#   eval "$(terminalsense init zsh)"
 
 _tac_preexec() {
   local result
-  result=$(echo "$1" | timeout 0.1 terminal-autocorrect --ipc correct 2>/dev/null)
+  result=$(echo "$1" | timeout 0.1 terminalsense --ipc correct 2>/dev/null)
   if [[ -n "$result" ]]; then
     print -n "\\r\\033[K✓ autocorrected: $result\\n"
     eval "$result"
@@ -38,7 +38,7 @@ _tac_preexec() {
 
 _tac_zle_widget() {
   local ghost
-  ghost=$(echo "$BUFFER" | timeout 0.1 terminal-autocorrect --ipc suggest 2>/dev/null)
+  ghost=$(echo "$BUFFER" | timeout 0.1 terminalsense --ipc suggest 2>/dev/null)
   if [[ -n "$ghost" ]]; then
     print -Pn "\\033[2m\${ghost}\\033[0m"
   fi
@@ -61,17 +61,17 @@ bindkey '^I' _tac_zle_widget
  * The snippet uses `bash-preexec` (a widely-used compatibility shim) to
  * provide `preexec` and `precmd` hooks equivalent to zsh's.
  *
- * The user adds `eval "$(terminal-autocorrect init bash)"` to their
+ * The user adds `eval "$(terminalsense init bash)"` to their
  * `.bashrc` or `.bash_profile`.
  */
 export function getBashHook(): string {
-  return `# terminal-autocorrect bash hook
+  return `# terminalsense bash hook
 # Add this to your ~/.bashrc:
-#   eval "$(terminal-autocorrect init bash)"
+#   eval "$(terminalsense init bash)"
 
 _tac_preexec() {
   local result
-  result=$(echo "$1" | timeout 0.1 terminal-autocorrect --ipc correct 2>/dev/null)
+  result=$(echo "$1" | timeout 0.1 terminalsense --ipc correct 2>/dev/null)
   if [[ -n "$result" ]]; then
     echo -e "\\r\\033[K✓ autocorrected: $result"
     eval "$result"
@@ -81,7 +81,7 @@ _tac_preexec() {
 
 _tac_precmd() {
   local ghost
-  ghost=$(echo "$READLINE_LINE" | timeout 0.1 terminal-autocorrect --ipc suggest 2>/dev/null)
+  ghost=$(echo "$READLINE_LINE" | timeout 0.1 terminalsense --ipc suggest 2>/dev/null)
   if [[ -n "$ghost" ]]; then
     echo -ne "\\033[2m\${ghost}\\033[0m"
   fi
@@ -115,10 +115,10 @@ fi
  * The user adds the following to their PowerShell profile
  * (`$PROFILE` — typically `~\Documents\PowerShell\Microsoft.PowerShell_profile.ps1`):
  *
- *   Invoke-Expression (& terminal-autocorrect init powershell)
+ *   Invoke-Expression (& terminalsense init powershell)
  */
 export function getPowerShellHook(): string {
-  return `# terminal-autocorrect PowerShell hook
+  return `# terminalsense PowerShell hook
 # Add this to your PowerShell profile ($PROFILE):
 #   Invoke-Expression ((& tac init powershell) -join "\`n")
 
@@ -143,7 +143,7 @@ function _TacSend {
 # Initialize guard variable
 $global:_TacInHook = $false
 
-# Autocorrect: Use PSReadLine to intercept the full command line before execution
+# PreCommandLookupAction compatibility for autocorrect
 # This works for all commands, including external executables like git, npm, etc.
 if (Get-Module -ListAvailable -Name PSReadLine) {
   Set-PSReadLineKeyHandler -Key Enter -ScriptBlock {
@@ -164,6 +164,22 @@ if (Get-Module -ListAvailable -Name PSReadLine) {
     
     # Execute the command
     [Microsoft.PowerShell.PSConsoleReadLine]::AcceptLine()
+  }
+
+  Set-PSReadLineKeyHandler -Key Tab -ScriptBlock {
+    $line = $null
+    $cursor = $null
+    [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$line, [ref]$cursor)
+
+    if ($line -and $line.Trim()) {
+      $ghost = _TacSend -Type 'suggest' -Buffer $line.Trim()
+      if ($ghost -and $ghost.StartsWith($line.Trim()) -and $ghost.Length -gt $line.Trim().Length) {
+        [Microsoft.PowerShell.PSConsoleReadLine]::Insert($ghost.Substring($line.Trim().Length))
+        return
+      }
+    }
+
+    [Microsoft.PowerShell.PSConsoleReadLine]::MenuComplete()
   }
 }
 

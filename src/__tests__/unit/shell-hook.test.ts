@@ -54,12 +54,12 @@ describe("getZshHook", () => {
   // 11.3 — IPC calls
   it("contains IPC call for autocorrect", () => {
     const snippet = getZshHook();
-    expect(snippet).toContain("terminal-autocorrect --ipc correct");
+    expect(snippet).toContain("terminalsense --ipc correct");
   });
 
   it("contains IPC call for suggestion", () => {
     const snippet = getZshHook();
-    expect(snippet).toContain("terminal-autocorrect --ipc suggest");
+    expect(snippet).toContain("terminalsense --ipc suggest");
   });
 
   it("applies 100ms timeout to IPC calls", () => {
@@ -131,12 +131,12 @@ describe("getBashHook", () => {
   // 11.3 — IPC calls
   it("contains IPC call for autocorrect", () => {
     const snippet = getBashHook();
-    expect(snippet).toContain("terminal-autocorrect --ipc correct");
+    expect(snippet).toContain("terminalsense --ipc correct");
   });
 
   it("contains IPC call for suggestion", () => {
     const snippet = getBashHook();
-    expect(snippet).toContain("terminal-autocorrect --ipc suggest");
+    expect(snippet).toContain("terminalsense --ipc suggest");
   });
 
   it("applies 100ms timeout to IPC calls", () => {
@@ -193,8 +193,8 @@ describe("getShellHook", () => {
     // Hook registration
     expect(snippet).toContain("add-zsh-hook");
     // IPC calls with timeout
-    expect(snippet).toContain("terminal-autocorrect --ipc correct");
-    expect(snippet).toContain("terminal-autocorrect --ipc suggest");
+    expect(snippet).toContain("terminalsense --ipc correct");
+    expect(snippet).toContain("terminalsense --ipc suggest");
     expect(snippet).toContain("timeout 0.1");
     // ANSI codes
     expect(snippet).toContain("\\033[2m");
@@ -209,8 +209,8 @@ describe("getShellHook", () => {
     // Fallback mechanism
     expect(snippet).toContain("PROMPT_COMMAND");
     // IPC calls with timeout
-    expect(snippet).toContain("terminal-autocorrect --ipc correct");
-    expect(snippet).toContain("terminal-autocorrect --ipc suggest");
+    expect(snippet).toContain("terminalsense --ipc correct");
+    expect(snippet).toContain("terminalsense --ipc suggest");
     expect(snippet).toContain("timeout 0.1");
     // ANSI codes
     expect(snippet).toContain("\\033[2m");
@@ -274,3 +274,4 @@ describe("getPowerShellHook", () => {
     expect(snippet.length).toBeGreaterThan(0);
   });
 });
+

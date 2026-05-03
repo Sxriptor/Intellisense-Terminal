@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 /**
- * CLI entry point for terminal-autocorrect.
+ * CLI entry point for terminalsense.
  *
- * Binary names: `terminal-autocorrect` and `tac` (alias).
+ * Binary names: `terminalsense` and `tac` (alias).
  *
  * Commands:
+ *   setup [shell]      Install the shell hook and start the daemon
  *   start              Launch the daemon as a detached background process
  *   stop               Send SIGTERM to the running daemon
  *   status             Print whether the daemon is running or stopped
@@ -31,6 +32,7 @@ import type { IPCRequest } from "./ipc.js";
 import { PID_FILE_PATH, SOCKET_PATH, HISTORY_PATH, IS_WINDOWS } from "./paths.js";
 import { readPidFile, writePidFile } from "./storage.js";
 import { getShellHook } from "./shell-hook.js";
+import { installShellSetup, resolveShell } from "./setup.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -259,6 +261,63 @@ export function cmdInit(shell: string): void {
  *
  * Queries the daemon via IPC for the session corrections log.
  */
+/**
+ * 10.6 - `setup [shell]` command
+ *
+ * Installs the shell hook into the user's profile and starts the daemon.
+ */
+export async function cmdSetup(options: {
+  shell?: string;
+  homeDir?: string;
+  tacHome?: string;
+  profilePaths?: string[];
+  hookFilePath?: string;
+  startDaemon?: boolean;
+  startFn?: () => Promise<void>;
+} = {}): Promise<void> {
+  let shell: "bash" | "zsh" | "powershell";
+  try {
+    shell = resolveShell(options.shell);
+  } catch (err) {
+    process.stderr.write(`${String(err)}\n`);
+    process.exit(1);
+    return;
+  }
+
+  const result = await installShellSetup({
+    shell,
+    homeDir: options.homeDir,
+    tacHome: options.tacHome,
+    profilePaths: options.profilePaths,
+    hookFilePath: options.hookFilePath,
+  });
+
+  process.stdout.write(`Installed hook file: ${result.hookFilePath}\n`);
+
+  if (result.updatedProfiles.length > 0) {
+    process.stdout.write("Updated profile files:\n");
+    for (const profilePath of result.updatedProfiles) {
+      process.stdout.write(`  ${profilePath}\n`);
+    }
+  } else {
+    process.stdout.write("Shell profile already contained the setup line.\n");
+  }
+
+  if (options.startDaemon === false) {
+    return;
+  }
+
+  if (options.startFn !== undefined) {
+    await options.startFn();
+  } else {
+    await cmdStart();
+  }
+
+  process.stdout.write(
+    "Setup complete. Reload your shell or open a new terminal session to activate it.\n"
+  );
+}
+
 export async function cmdCorrections(options: { socketPath?: string } = {}): Promise<void> {
   const socketPath = options.socketPath ?? SOCKET_PATH;
 
@@ -273,7 +332,7 @@ export async function cmdCorrections(options: { socketPath?: string } = {}): Pro
 
   if (response === null) {
     process.stderr.write(
-      "Could not connect to daemon. Is it running? Try: terminal-autocorrect start\n"
+      "Could not connect to daemon. Is it running? Try: terminalsense start\n"
     );
     process.exit(1);
   }
@@ -436,11 +495,23 @@ export function buildProgram(): Command {
   const program = new Command();
 
   program
-    .name("terminal-autocorrect")
+    .name("terminalsense")
     .description(
       "A lightweight terminal daemon providing autocorrect, ghost-text suggestions, and memory-based predictions."
     )
     .version("0.1.0");
+
+  // --- setup ---
+  program
+    .command("setup [shell]")
+    .description("Install the shell hook, update the profile, and start the daemon")
+    .option("--no-start", "Install the hook without starting the daemon")
+    .action(async (shell: string | undefined, options: { start?: boolean }) => {
+      await cmdSetup({
+        shell,
+        startDaemon: options.start !== false,
+      });
+    });
 
   // --- start ---
   program

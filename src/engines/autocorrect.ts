@@ -222,6 +222,15 @@ export class AutocorrectEngine {
       return { status: "unchanged", original };
     }
 
+    // Apply built-in git-specific correction rules before fuzzy matching
+    if (command === "git") {
+      const builtinCorrection = GIT_CORRECTIONS[subToken];
+      if (builtinCorrection && knownSubs.has(builtinCorrection)) {
+        const corrected = this._rebuildCommand(tokens, 1, builtinCorrection);
+        return { status: "corrected", corrected, original };
+      }
+    }
+
     // Check learned corrections first (highest priority)
     const learnedCorrection = this.learnedCorrections.getCorrection(command, subToken);
     if (learnedCorrection && knownSubs.has(learnedCorrection)) {

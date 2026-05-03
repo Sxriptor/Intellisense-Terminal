@@ -21,6 +21,7 @@ import {
   cmdStop,
   cmdStatus,
   cmdInit,
+  cmdSetup,
   cmdCorrections,
   cmdConfigSet,
   cmdConfigGet,
@@ -350,7 +351,7 @@ describe("cmdInit", () => {
       cmdInit("zsh");
     });
 
-    expect(stdout).toContain("terminal-autocorrect --ipc correct");
+    expect(stdout).toContain("terminalsense --ipc correct");
   });
 
   it("bash snippet contains IPC call for autocorrect", async () => {
@@ -358,7 +359,7 @@ describe("cmdInit", () => {
       cmdInit("bash");
     });
 
-    expect(stdout).toContain("terminal-autocorrect --ipc correct");
+    expect(stdout).toContain("terminalsense --ipc correct");
   });
 
   it("outputs powershell hook snippet containing required elements", async () => {
@@ -376,6 +377,52 @@ describe("cmdInit", () => {
 // ---------------------------------------------------------------------------
 // 10.6 — corrections command
 // ---------------------------------------------------------------------------
+
+describe("cmdSetup", () => {
+  let dir: string;
+
+  beforeEach(async () => {
+    dir = await makeTempDir();
+  });
+
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("installs the hook file and updates the shell profile", async () => {
+    const homeDir = dir;
+    const tacHome = join(dir, ".terminal-autocorrect");
+    const profilePath = join(dir, ".zshrc");
+    let started = false;
+
+    const { stdout, exitCode } = await captureOutput(async () => {
+      await cmdSetup({
+        shell: "zsh",
+        homeDir,
+        tacHome,
+        profilePaths: [profilePath],
+        hookFilePath: join(tacHome, "tac-hook.zsh"),
+        startDaemon: false,
+        startFn: async () => {
+          started = true;
+        },
+      });
+    });
+
+    expect(stdout).toContain("Installed hook file");
+    expect(stdout).toContain("Updated profile files");
+    expect(started).toBe(false);
+    expect(exitCode).toBeNull();
+
+    const hookContents = await readFile(join(tacHome, "tac-hook.zsh"), "utf-8");
+    expect(hookContents).toContain("_tac_preexec");
+    expect(hookContents).toContain("terminalsense --ipc correct");
+
+    const profileContents = await readFile(profilePath, "utf-8");
+    expect(profileContents).toContain("terminalsense setup");
+    expect(profileContents).toContain(`source "${join(tacHome, "tac-hook.zsh")}"`);
+  });
+});
 
 describe("cmdCorrections", () => {
   let dir: string;
@@ -694,3 +741,4 @@ describe("cmdHistoryClear", () => {
     expect(await fileExists(historyPath)).toBe(true);
   });
 });
+
