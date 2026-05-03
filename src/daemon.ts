@@ -17,6 +17,7 @@ import { IPCServer } from "./ipc.js";
 import type { IPCRequest, DaemonResponse, CorrectionRecord } from "./ipc.js";
 import { PID_FILE_PATH, SOCKET_PATH, IS_WINDOWS } from "./paths.js";
 import { writePidFile, deletePidFile } from "./storage.js";
+import { initializeCorrectionsDictionary } from "./corrections-dictionary.js";
 import { initializeSuggestionsDictionary, getDefaultSuggestionsDictionary } from "./suggestions-dictionary.js";
 import type { SuggestionsDictionaryManager } from "./suggestions-dictionary.js";
 import { initializeLearnedCorrections, getDefaultLearnedCorrections } from "./learned-corrections.js";
@@ -120,7 +121,8 @@ export class Daemon {
     // 9.5 — load external providers (or fall back to built-in)
     const { suggestionProvider, memoryProvider } = await this._loadProviders();
 
-    // Initialize suggestions dictionary
+    // Initialize packaged corrections and suggestions dictionaries.
+    const correctionsDictionary = await initializeCorrectionsDictionary();
     this.suggestionsDict = await initializeSuggestionsDictionary();
 
     // Initialize learned corrections
@@ -130,6 +132,7 @@ export class Daemon {
     const maxEditDistance = this.configManager.get("maxEditDistance");
     this.autocorrectEngine = new AutocorrectEngine(this.corpus, { 
       maxEditDistance,
+      correctionsDictionary,
       learnedCorrections: this.learnedCorrections 
     });
 

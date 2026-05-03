@@ -647,9 +647,9 @@ export async function cmdSuggestionsStats(): Promise<void> {
  * Dictionary stats command - show corrections dictionary statistics
  */
 export async function cmdDictionaryStats(): Promise<void> {
-  const { getDefaultCorrectionsDictionary } = await import("./corrections-dictionary.js");
+  const { initializeCorrectionsDictionary } = await import("./corrections-dictionary.js");
   
-  const dictionary = getDefaultCorrectionsDictionary();
+  const dictionary = await initializeCorrectionsDictionary();
   const stats = dictionary.getStats();
   
   process.stdout.write(`Corrections Dictionary Statistics:\n`);

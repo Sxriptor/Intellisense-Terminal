@@ -289,6 +289,30 @@ describe("Daemon corrections log", () => {
     const log = daemon.getCorrectionsLog();
     expect(log).toHaveLength(correctedCount);
   });
+
+  itSocket("loads packaged corrections from common.json at startup", async () => {
+    const pidFile = join(dir, "daemon.pid");
+    const socketFile = join(dir, "daemon.sock");
+
+    daemon = new Daemon({ pidFilePath: pidFile, socketPath: socketFile });
+    await daemon.start();
+
+    const { IPCClient } = await import("../../ipc.js");
+    const { randomUUID } = await import("node:crypto");
+    const client = new IPCClient();
+
+    const req = {
+      type: "correct" as const,
+      buffer: "gti",
+      sessionId: daemon.getSessionId(),
+      requestId: randomUUID(),
+    };
+
+    const res = await client.send(socketFile, req, 2000);
+    expect(res).not.toBeNull();
+    expect(res!.ok).toBe(true);
+    expect(res!.data?.corrected).toBe("git");
+  });
 });
 
 // ---------------------------------------------------------------------------
