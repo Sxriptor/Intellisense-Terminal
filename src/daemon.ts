@@ -313,7 +313,7 @@ export class Daemon {
     const result = this.suggestionEngine.suggest(buffer, history);
 
     if (result.ghost !== "") {
-      return { ghost: result.ghost };
+      return { ghost: buffer + result.ghost };
     }
 
     return {};
